@@ -27,6 +27,9 @@ public class JwtTokenInterceptor implements HandlerInterceptor {
         boolean admin = uri.startsWith("/admin/");
         String token = admin ? request.getHeader("token") : request.getHeader("authentication");
         if (token == null || token.isBlank()) {
+            if (isOptionalUserAuth(uri)) {
+                return true;
+            }
             throw new IllegalArgumentException("未登录或登录已过期");
         }
         String secret = admin ? jwtProperties.getAdminSecretKey() : jwtProperties.getUserSecretKey();
@@ -38,6 +41,10 @@ public class JwtTokenInterceptor implements HandlerInterceptor {
         BaseContext.setCurrentId(claims.get(JwtClaimsConstant.USER_ID, Long.class));
         BaseContext.setCurrentType(expectedType);
         return true;
+    }
+
+    private boolean isOptionalUserAuth(String uri) {
+        return uri.startsWith("/user/article/");
     }
 
     @Override

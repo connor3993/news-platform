@@ -26,10 +26,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         "/user/auth/login",
                         "/user/category/list",
                         "/user/article/page",
-                        "/user/article/hot",
-                        "/user/article/{id}",
-                        "/user/article/{id}/comment/page",
-                        "/user/article/{id}/read"
+                        "/user/article/hot"
                 );
     }
 
