@@ -1,0 +1,39 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: media-news
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/news_db?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+    username: root
+    password: '000000'
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+      database: 0
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 20MB
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: auto
+
+media:
+  jwt:
+    admin-secret-key: media-admin-secret-media-admin-secret
+    user-secret-key: media-user-secret-media-user-secret
+    ttl: 7200000
+  oss:
+    endpoint: your-endpoint
+    access-key-id: your-access-key-id
+    access-key-secret: your-access-key-secret
+    bucket-name: your-bucket
+    url-prefix: https://your-bucket.oss-cn.com/
