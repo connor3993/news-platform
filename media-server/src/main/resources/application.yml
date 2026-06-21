@@ -30,7 +30,7 @@ media:
   jwt:
     admin-secret-key: media-admin-secret-media-admin-secret
     user-secret-key: media-user-secret-media-user-secret
-    ttl: 7200000
+    ttl: 86400000
   oss:
     endpoint: your-endpoint
     access-key-id: your-access-key-id
