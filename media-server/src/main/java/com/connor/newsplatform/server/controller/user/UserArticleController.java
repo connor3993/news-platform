@@ -36,8 +36,8 @@ public class UserArticleController {
     }
 
     @GetMapping("/hot")
-    public Result<List<ArticleVO>> hot() {
-        return Result.success(articleService.hotList());
+    public Result<List<ArticleVO>> hot(@RequestParam(defaultValue = "hot") String sort) {
+        return Result.success(articleService.hotList(sort));
     }
 
     @GetMapping("/{id}")

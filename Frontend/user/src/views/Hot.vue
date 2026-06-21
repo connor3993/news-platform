@@ -6,6 +6,18 @@
         热门榜单
       </h2>
       <p class="hot-desc">实时热门新闻 Top 10</p>
+      <div class="rank-tabs">
+        <button
+          v-for="item in rankOptions"
+          :key="item.value"
+          class="rank-tab"
+          :class="{ active: activeSort === item.value }"
+          @click="changeSort(item.value)"
+        >
+          <el-icon><component :is="item.icon" /></el-icon>
+          {{ item.label }}
+        </button>
+      </div>
     </div>
 
     <!-- Loading -->
@@ -36,6 +48,10 @@
             <span class="meta-hot" v-if="article.hotScore">
               <el-icon><TrendCharts /></el-icon>
               热度 {{ formatNumber(article.hotScore) }}
+            </span>
+            <span class="meta-likes">
+              <el-icon><Pointer /></el-icon>
+              {{ formatNumber(article.likeCount || 0) }} 点赞
             </span>
             <span class="meta-category" v-if="article.categoryName">
               {{ article.categoryName }}
@@ -81,14 +97,27 @@ const router = useRouter()
 const articleStore = useArticleStore()
 const loading = ref(true)
 const imageErrors = ref({})
+const activeSort = ref('hot')
+
+const rankOptions = [
+  { label: '按热度排行', value: 'hot', icon: 'TrendCharts' },
+  { label: '按观看量排行', value: 'view', icon: 'View' },
+  { label: '按点赞量排行', value: 'like', icon: 'Pointer' }
+]
 
 const loadHotArticles = async () => {
   loading.value = true
   try {
-    await articleStore.fetchHotArticles()
+    await articleStore.fetchHotArticles({ sort: activeSort.value })
   } finally {
     loading.value = false
   }
+}
+
+const changeSort = (sort) => {
+  if (activeSort.value === sort) return
+  activeSort.value = sort
+  loadHotArticles()
 }
 
 onMounted(() => {
@@ -121,6 +150,42 @@ onMounted(() => {
   color: var(--text-tertiary);
   margin-top: 4px;
   margin-left: 32px;
+}
+
+.rank-tabs {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+  margin-left: 32px;
+  flex-wrap: wrap;
+}
+
+.rank-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 34px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-white);
+  color: var(--text-secondary);
+  border-radius: 18px;
+  padding: 0 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.rank-tab:hover {
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.rank-tab.active {
+  color: var(--primary-color);
+  background: var(--primary-light);
+  border-color: var(--primary-light);
+  font-weight: 600;
 }
 
 .hot-list {
@@ -210,7 +275,8 @@ onMounted(() => {
 }
 
 .meta-views,
-.meta-hot {
+.meta-hot,
+.meta-likes {
   display: flex;
   align-items: center;
   gap: 2px;
@@ -257,6 +323,18 @@ onMounted(() => {
 
   .hot-title {
     font-size: var(--font-size-lg);
+  }
+
+  .rank-tabs {
+    margin-left: 0;
+    gap: 8px;
+  }
+
+  .rank-tab {
+    flex: 1;
+    padding: 0 8px;
+    min-width: 0;
+    white-space: nowrap;
   }
 
   .hot-item {

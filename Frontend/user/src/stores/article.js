@@ -52,8 +52,8 @@ export const useArticleStore = defineStore('article', () => {
   /**
    * Fetch hot articles top 10
    */
-  async function fetchHotArticles() {
-    const res = await getHotArticlesApi()
+  async function fetchHotArticles(params = {}) {
+    const res = await getHotArticlesApi(params)
     hotList.value = res.data || []
     return res.data
   }

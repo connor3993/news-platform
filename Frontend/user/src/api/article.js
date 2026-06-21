@@ -56,6 +56,6 @@ export function dislikeArticleApi(id) {
 /**
  * Get hot articles top 10
  */
-export function getHotArticlesApi() {
-  return request.get('/user/article/hot')
+export function getHotArticlesApi(params) {
+  return request.get('/user/article/hot', { params })
 }

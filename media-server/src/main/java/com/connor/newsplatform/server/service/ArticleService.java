@@ -42,7 +42,7 @@ public interface ArticleService {
 
     void recordRead(Long id);
 
-    List<ArticleVO> hotList();
+    List<ArticleVO> hotList(String sort);
 
     void recalculateHotScore();
 }

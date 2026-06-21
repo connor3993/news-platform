@@ -38,7 +38,7 @@ public class NewsTask {
     @Scheduled(cron = "0 */10 * * * ?")
     public void refreshHotScore() {
         articleService.recalculateHotScore();
-        articleService.hotList();
+        articleService.hotList("hot");
         log.info("hot article cache refreshed");
         notifyAdmins("TASK_HOT_REFRESH", "资讯热度已刷新", "热点资讯排行和热度分已重新计算");
     }

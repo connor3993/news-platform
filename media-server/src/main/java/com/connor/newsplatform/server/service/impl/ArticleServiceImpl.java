@@ -341,16 +341,24 @@ public class ArticleServiceImpl implements ArticleService {
 
     @Override
     @SuppressWarnings("unchecked")
-    public List<ArticleVO> hotList() {
-        Object cached = getCachedValue(CacheKeys.ARTICLE_HOT);
+    public List<ArticleVO> hotList(String sort) {
+        String normalizedSort = normalizeHotSort(sort);
+        Object cached = getCachedValue(hotCacheKey(normalizedSort));
         if (cached instanceof List<?> list) {
             return (List<ArticleVO>) list;
         }
-        List<ArticleVO> articles = new ArrayList<>(enrich(articleMapper.selectList(new LambdaQueryWrapper<NewsArticle>()
-                .eq(NewsArticle::getStatus, ArticleStatus.PUBLISHED)
-                .orderByDesc(NewsArticle::getHotScore)
-                .last("LIMIT 10")), false));
-        redisTemplate.opsForValue().set(CacheKeys.ARTICLE_HOT, articles, Duration.ofMinutes(10));
+        LambdaQueryWrapper<NewsArticle> wrapper = new LambdaQueryWrapper<NewsArticle>()
+                .eq(NewsArticle::getStatus, ArticleStatus.PUBLISHED);
+        if ("view".equals(normalizedSort)) {
+            wrapper.orderByDesc(NewsArticle::getViewCount);
+        } else if ("like".equals(normalizedSort)) {
+            wrapper.orderByDesc(NewsArticle::getLikeCount);
+        } else {
+            wrapper.orderByDesc(NewsArticle::getHotScore);
+        }
+        wrapper.orderByDesc(NewsArticle::getPublishTime).last("LIMIT 10");
+        List<ArticleVO> articles = new ArrayList<>(enrich(articleMapper.selectList(wrapper), false));
+        redisTemplate.opsForValue().set(hotCacheKey(normalizedSort), articles, Duration.ofMinutes(10));
         return articles;
     }
 
@@ -371,7 +379,7 @@ public class ArticleServiceImpl implements ArticleService {
             update.setHotScore(score);
             articleMapper.updateById(update);
         }
-        redisTemplate.delete(CacheKeys.ARTICLE_HOT);
+        clearHotCaches();
     }
 
     private ArticleVO detail(Long id, boolean publishedOnly) {
@@ -506,11 +514,31 @@ public class ArticleServiceImpl implements ArticleService {
     }
 
     private void clearArticleCache(Long id) {
-        redisTemplate.delete(CacheKeys.ARTICLE_HOT);
+        clearHotCaches();
         redisTemplate.delete(CacheKeys.DASHBOARD_TODAY);
         if (id != null) {
             redisTemplate.delete(CacheKeys.ARTICLE_DETAIL_PREFIX + id);
         }
+    }
+
+    private String normalizeHotSort(String sort) {
+        if ("view".equalsIgnoreCase(sort) || "like".equalsIgnoreCase(sort)) {
+            return sort.toLowerCase();
+        }
+        return "hot";
+    }
+
+    private String hotCacheKey(String sort) {
+        return CacheKeys.ARTICLE_HOT + ":" + sort;
+    }
+
+    private void clearHotCaches() {
+        redisTemplate.delete(List.of(
+                CacheKeys.ARTICLE_HOT,
+                hotCacheKey("hot"),
+                hotCacheKey("view"),
+                hotCacheKey("like")
+        ));
     }
 
     private Object getCachedValue(String key) {

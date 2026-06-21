@@ -107,7 +107,7 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     @Override
     public List<ArticleVO> hotTop10() {
-        return articleService.hotList();
+        return articleService.hotList("hot");
     }
 
     @Override
