@@ -24,6 +24,8 @@ public class NewsArticle {
     private Long viewCount;
     private Long likeCount;
     private Long dislikeCount;
+    private Long favoriteCount;
+    private Long commentCount;
     private BigDecimal hotScore;
     private String rejectReason;
     private LocalDateTime createTime;

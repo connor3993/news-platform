@@ -11,13 +11,9 @@
             {{ article.categoryName }}
           </span>
           <span class="meta-time">{{ formatRelativeTime(article.publishTime) }}</span>
-          <span class="meta-views" v-if="article.viewCount">
-            <el-icon><View /></el-icon>
-            {{ formatNumber(article.viewCount) }}
-          </span>
-          <span class="meta-hot" v-if="article.hotScore">
-            <el-icon><TrendCharts /></el-icon>
-            {{ formatNumber(article.hotScore) }}
+          <span class="meta-comments">
+            <el-icon><ChatDotRound /></el-icon>
+            {{ formatNumber(article.commentCount || 0) }} 评论
           </span>
         </div>
       </div>
@@ -130,8 +126,7 @@ const handleClick = () => {
   font-size: var(--font-size-xs);
 }
 
-.meta-views,
-.meta-hot {
+.meta-comments {
   display: flex;
   align-items: center;
   gap: 2px;

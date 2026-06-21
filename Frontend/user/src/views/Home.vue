@@ -44,10 +44,10 @@
         </span>
         <span
           class="sort-item"
-          :class="{ active: sortBy === 'hot' }"
-          @click="changeSortBy('hot')"
+          :class="{ active: sortBy === 'popular' }"
+          @click="changeSortBy('popular')"
         >
-          热门
+          最受欢迎
         </span>
       </div>
       <span class="total-count">共 {{ articleStore.total }} 篇文章</span>

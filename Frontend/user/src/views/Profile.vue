@@ -61,6 +61,13 @@
           </span>
           <el-icon><ArrowRight /></el-icon>
         </button>
+        <button class="quick-item" @click="router.push('/favorites')">
+          <span>
+            <strong>收藏夹</strong>
+            <em>查看收藏过的文章</em>
+          </span>
+          <el-icon><ArrowRight /></el-icon>
+        </button>
       </div>
 
       <!-- Actions -->

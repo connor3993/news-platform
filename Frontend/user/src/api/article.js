@@ -54,6 +54,34 @@ export function dislikeArticleApi(id) {
 }
 
 /**
+ * Toggle favorite status
+ */
+export function favoriteArticleApi(id) {
+  return request.post(`/user/article/${id}/favorite`)
+}
+
+/**
+ * Get favorite article page
+ */
+export function getFavoriteArticlesApi(params) {
+  return request.get('/user/article/favorite/page', { params })
+}
+
+/**
+ * Get article comments
+ */
+export function getArticleCommentsApi(id, params) {
+  return request.get(`/user/article/${id}/comment/page`, { params })
+}
+
+/**
+ * Add article comment
+ */
+export function addArticleCommentApi(id, data) {
+  return request.post(`/user/article/${id}/comment`, data)
+}
+
+/**
  * Get hot articles top 10
  */
 export function getHotArticlesApi(params) {

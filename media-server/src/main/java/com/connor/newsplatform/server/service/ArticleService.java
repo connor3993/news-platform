@@ -3,7 +3,9 @@ package com.connor.newsplatform.server.service;
 import com.connor.newsplatform.common.result.PageResult;
 import com.connor.newsplatform.pojo.dto.ArticleDTO;
 import com.connor.newsplatform.pojo.dto.AuditDTO;
+import com.connor.newsplatform.pojo.dto.CommentDTO;
 import com.connor.newsplatform.pojo.vo.ArticleVO;
+import com.connor.newsplatform.pojo.vo.CommentVO;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -38,7 +40,15 @@ public interface ArticleService {
 
     PageResult<ArticleVO> userMinePage(int page, int pageSize, Integer status);
 
+    PageResult<ArticleVO> userFavoritePage(int page, int pageSize);
+
     ArticleVO vote(Long id, Integer voteType);
+
+    ArticleVO toggleFavorite(Long id);
+
+    PageResult<CommentVO> commentPage(Long id, int page, int pageSize);
+
+    CommentVO addComment(Long id, CommentDTO dto);
 
     void recordRead(Long id);
 

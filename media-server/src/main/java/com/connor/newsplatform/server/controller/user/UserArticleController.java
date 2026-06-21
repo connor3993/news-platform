@@ -4,7 +4,9 @@ import com.connor.newsplatform.common.annotation.LogRecord;
 import com.connor.newsplatform.common.result.PageResult;
 import com.connor.newsplatform.common.result.Result;
 import com.connor.newsplatform.pojo.dto.ArticleDTO;
+import com.connor.newsplatform.pojo.dto.CommentDTO;
 import com.connor.newsplatform.pojo.vo.ArticleVO;
+import com.connor.newsplatform.pojo.vo.CommentVO;
 import com.connor.newsplatform.server.service.ArticleService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -52,6 +54,12 @@ public class UserArticleController {
         return Result.success(articleService.userMinePage(page, pageSize, status));
     }
 
+    @GetMapping("/favorite/page")
+    public Result<PageResult<ArticleVO>> favorites(@RequestParam(defaultValue = "1") int page,
+                                                   @RequestParam(defaultValue = "10") int pageSize) {
+        return Result.success(articleService.userFavoritePage(page, pageSize));
+    }
+
     @LogRecord("用户投稿")
     @PostMapping
     public Result<Void> submitArticle(@Valid @RequestBody ArticleDTO dto) {
@@ -69,6 +77,25 @@ public class UserArticleController {
     @PostMapping("/{id}/dislike")
     public Result<ArticleVO> dislike(@PathVariable Long id) {
         return Result.success(articleService.vote(id, -1));
+    }
+
+    @LogRecord("收藏文章")
+    @PostMapping("/{id}/favorite")
+    public Result<ArticleVO> favorite(@PathVariable Long id) {
+        return Result.success(articleService.toggleFavorite(id));
+    }
+
+    @GetMapping("/{id}/comment/page")
+    public Result<PageResult<CommentVO>> comments(@PathVariable Long id,
+                                                  @RequestParam(defaultValue = "1") int page,
+                                                  @RequestParam(defaultValue = "10") int pageSize) {
+        return Result.success(articleService.commentPage(id, page, pageSize));
+    }
+
+    @LogRecord("发表评论")
+    @PostMapping("/{id}/comment")
+    public Result<CommentVO> comment(@PathVariable Long id, @Valid @RequestBody CommentDTO dto) {
+        return Result.success(articleService.addComment(id, dto));
     }
 
     @LogRecord("记录阅读行为")

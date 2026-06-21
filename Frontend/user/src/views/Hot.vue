@@ -45,13 +45,17 @@
               <el-icon><View /></el-icon>
               {{ formatNumber(article.viewCount) }} 阅读
             </span>
-            <span class="meta-hot" v-if="article.hotScore">
-              <el-icon><TrendCharts /></el-icon>
-              热度 {{ formatNumber(article.hotScore) }}
-            </span>
             <span class="meta-likes">
               <el-icon><Pointer /></el-icon>
               {{ formatNumber(article.likeCount || 0) }} 点赞
+            </span>
+            <span class="meta-likes">
+              <el-icon><ChatDotRound /></el-icon>
+              {{ formatNumber(article.commentCount || 0) }} 评论
+            </span>
+            <span class="meta-likes">
+              <el-icon><Star /></el-icon>
+              {{ formatNumber(article.favoriteCount || 0) }} 收藏
             </span>
             <span class="meta-category" v-if="article.categoryName">
               {{ article.categoryName }}
@@ -97,12 +101,11 @@ const router = useRouter()
 const articleStore = useArticleStore()
 const loading = ref(true)
 const imageErrors = ref({})
-const activeSort = ref('hot')
+const activeSort = ref('latest')
 
 const rankOptions = [
-  { label: '按热度排行', value: 'hot', icon: 'TrendCharts' },
-  { label: '按观看量排行', value: 'view', icon: 'View' },
-  { label: '按点赞量排行', value: 'like', icon: 'Pointer' }
+  { label: '按最新排行', value: 'latest', icon: 'Clock' },
+  { label: '按最受欢迎排行', value: 'popular', icon: 'Pointer' }
 ]
 
 const loadHotArticles = async () => {

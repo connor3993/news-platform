@@ -12,18 +12,24 @@ import com.connor.newsplatform.common.result.PageResult;
 import com.connor.newsplatform.common.utils.DateTimeUtil;
 import com.connor.newsplatform.pojo.dto.ArticleDTO;
 import com.connor.newsplatform.pojo.dto.AuditDTO;
+import com.connor.newsplatform.pojo.dto.CommentDTO;
 import com.connor.newsplatform.pojo.entity.AdminUser;
 import com.connor.newsplatform.pojo.entity.AppUser;
 import com.connor.newsplatform.pojo.entity.NewsArticle;
+import com.connor.newsplatform.pojo.entity.NewsArticleComment;
 import com.connor.newsplatform.pojo.entity.NewsArticleContent;
+import com.connor.newsplatform.pojo.entity.NewsArticleFavorite;
 import com.connor.newsplatform.pojo.entity.NewsArticleVote;
 import com.connor.newsplatform.pojo.entity.NewsAuditRecord;
 import com.connor.newsplatform.pojo.entity.NewsCategory;
 import com.connor.newsplatform.pojo.entity.NewsReadRecord;
 import com.connor.newsplatform.pojo.vo.ArticleVO;
+import com.connor.newsplatform.pojo.vo.CommentVO;
 import com.connor.newsplatform.server.mapper.AdminUserMapper;
 import com.connor.newsplatform.server.mapper.AppUserMapper;
 import com.connor.newsplatform.server.mapper.NewsArticleContentMapper;
+import com.connor.newsplatform.server.mapper.NewsArticleCommentMapper;
+import com.connor.newsplatform.server.mapper.NewsArticleFavoriteMapper;
 import com.connor.newsplatform.server.mapper.NewsArticleMapper;
 import com.connor.newsplatform.server.mapper.NewsArticleVoteMapper;
 import com.connor.newsplatform.server.mapper.NewsAuditRecordMapper;
@@ -56,6 +62,8 @@ public class ArticleServiceImpl implements ArticleService {
     private final NewsAuditRecordMapper auditRecordMapper;
     private final NewsReadRecordMapper readRecordMapper;
     private final NewsArticleVoteMapper voteMapper;
+    private final NewsArticleFavoriteMapper favoriteMapper;
+    private final NewsArticleCommentMapper commentMapper;
     private final AdminUserMapper adminUserMapper;
     private final AppUserMapper appUserMapper;
     private final RedisTemplate<String, Object> redisTemplate;
@@ -67,6 +75,8 @@ public class ArticleServiceImpl implements ArticleService {
                               NewsAuditRecordMapper auditRecordMapper,
                               NewsReadRecordMapper readRecordMapper,
                               NewsArticleVoteMapper voteMapper,
+                              NewsArticleFavoriteMapper favoriteMapper,
+                              NewsArticleCommentMapper commentMapper,
                               AdminUserMapper adminUserMapper,
                               AppUserMapper appUserMapper,
                               RedisTemplate<String, Object> redisTemplate,
@@ -77,6 +87,8 @@ public class ArticleServiceImpl implements ArticleService {
         this.auditRecordMapper = auditRecordMapper;
         this.readRecordMapper = readRecordMapper;
         this.voteMapper = voteMapper;
+        this.favoriteMapper = favoriteMapper;
+        this.commentMapper = commentMapper;
         this.adminUserMapper = adminUserMapper;
         this.appUserMapper = appUserMapper;
         this.redisTemplate = redisTemplate;
@@ -111,6 +123,8 @@ public class ArticleServiceImpl implements ArticleService {
         article.setViewCount(0L);
         article.setLikeCount(0L);
         article.setDislikeCount(0L);
+        article.setFavoriteCount(0L);
+        article.setCommentCount(0L);
         article.setHotScore(BigDecimal.ZERO);
         article.setCreateTime(LocalDateTime.now());
         article.setUpdateTime(LocalDateTime.now());
@@ -135,6 +149,8 @@ public class ArticleServiceImpl implements ArticleService {
         article.setViewCount(0L);
         article.setLikeCount(0L);
         article.setDislikeCount(0L);
+        article.setFavoriteCount(0L);
+        article.setCommentCount(0L);
         article.setHotScore(BigDecimal.ZERO);
         article.setCreateTime(LocalDateTime.now());
         article.setUpdateTime(LocalDateTime.now());
@@ -190,6 +206,10 @@ public class ArticleServiceImpl implements ArticleService {
                 .eq(NewsArticleContent::getArticleId, id));
         voteMapper.delete(new LambdaQueryWrapper<NewsArticleVote>()
                 .eq(NewsArticleVote::getArticleId, id));
+        favoriteMapper.delete(new LambdaQueryWrapper<NewsArticleFavorite>()
+                .eq(NewsArticleFavorite::getArticleId, id));
+        commentMapper.delete(new LambdaQueryWrapper<NewsArticleComment>()
+                .eq(NewsArticleComment::getArticleId, id));
         auditRecordMapper.delete(new LambdaQueryWrapper<NewsAuditRecord>()
                 .eq(NewsAuditRecord::getArticleId, id));
         articleMapper.deleteById(id);
@@ -250,13 +270,16 @@ public class ArticleServiceImpl implements ArticleService {
 
     @Override
     public PageResult<ArticleVO> userPage(int page, int pageSize, Long categoryId, String keyword, String sort) {
-        boolean hotSort = "hot".equalsIgnoreCase(sort);
+        boolean popularSort = "popular".equalsIgnoreCase(sort) || "hot".equalsIgnoreCase(sort);
         Page<NewsArticle> result = articleMapper.selectPage(Page.of(page, pageSize), new LambdaQueryWrapper<NewsArticle>()
                 .eq(NewsArticle::getStatus, ArticleStatus.PUBLISHED)
                 .eq(categoryId != null, NewsArticle::getCategoryId, categoryId)
                 .like(StringUtils.hasText(keyword), NewsArticle::getTitle, keyword)
-                .orderByDesc(hotSort, NewsArticle::getHotScore)
-                .orderByDesc(!hotSort, NewsArticle::getPublishTime));
+                .orderByDesc(popularSort, NewsArticle::getLikeCount)
+                .orderByDesc(popularSort, NewsArticle::getCommentCount)
+                .orderByDesc(popularSort, NewsArticle::getFavoriteCount)
+                .orderByDesc(!popularSort, NewsArticle::getHotScore)
+                .orderByDesc(NewsArticle::getPublishTime));
         return new PageResult<>(result.getTotal(), enrich(result.getRecords(), false));
     }
 
@@ -283,6 +306,27 @@ public class ArticleServiceImpl implements ArticleService {
                 .eq(status != null, NewsArticle::getStatus, status)
                 .orderByDesc(NewsArticle::getUpdateTime));
         return new PageResult<>(result.getTotal(), enrich(result.getRecords(), false));
+    }
+
+    @Override
+    public PageResult<ArticleVO> userFavoritePage(int page, int pageSize) {
+        Page<NewsArticleFavorite> favoritePage = favoriteMapper.selectPage(Page.of(page, pageSize), new LambdaQueryWrapper<NewsArticleFavorite>()
+                .eq(NewsArticleFavorite::getUserId, BaseContext.getCurrentId())
+                .orderByDesc(NewsArticleFavorite::getCreateTime));
+        List<Long> articleIds = favoritePage.getRecords().stream().map(NewsArticleFavorite::getArticleId).toList();
+        if (articleIds.isEmpty()) {
+            return new PageResult<>(favoritePage.getTotal(), List.of());
+        }
+        Map<Long, NewsArticle> articleMap = articleMapper.selectList(new LambdaQueryWrapper<NewsArticle>()
+                        .in(NewsArticle::getId, articleIds)
+                        .eq(NewsArticle::getStatus, ArticleStatus.PUBLISHED))
+                .stream()
+                .collect(Collectors.toMap(NewsArticle::getId, Function.identity()));
+        List<NewsArticle> ordered = articleIds.stream()
+                .map(articleMap::get)
+                .filter(Objects::nonNull)
+                .toList();
+        return new PageResult<>(favoritePage.getTotal(), enrich(ordered, false));
     }
 
     @Override
@@ -322,11 +366,59 @@ public class ArticleServiceImpl implements ArticleService {
 
     @Override
     @Transactional
-    public void recordRead(Long id) {
-        NewsArticle article = requireArticle(id);
-        if (!Objects.equals(article.getStatus(), ArticleStatus.PUBLISHED)) {
-            throw new BusinessException("资讯未发布");
+    public ArticleVO toggleFavorite(Long id) {
+        NewsArticle article = requirePublishedArticle(id);
+        Long userId = BaseContext.getCurrentId();
+        NewsArticleFavorite existing = favoriteMapper.selectOne(new LambdaQueryWrapper<NewsArticleFavorite>()
+                .eq(NewsArticleFavorite::getArticleId, id)
+                .eq(NewsArticleFavorite::getUserId, userId));
+        if (existing == null) {
+            NewsArticleFavorite favorite = new NewsArticleFavorite();
+            favorite.setArticleId(id);
+            favorite.setUserId(userId);
+            favorite.setCreateTime(LocalDateTime.now());
+            favoriteMapper.insert(favorite);
+            changeArticleCounter(id, "favorite_count", 1);
+        } else {
+            favoriteMapper.deleteById(existing.getId());
+            changeArticleCounter(id, "favorite_count", -1);
         }
+        recalculateSingleHotScore(id);
+        clearArticleCache(id);
+        return detail(article.getId(), true);
+    }
+
+    @Override
+    public PageResult<CommentVO> commentPage(Long id, int page, int pageSize) {
+        requirePublishedArticle(id);
+        Page<NewsArticleComment> result = commentMapper.selectPage(Page.of(page, pageSize), new LambdaQueryWrapper<NewsArticleComment>()
+                .eq(NewsArticleComment::getArticleId, id)
+                .eq(NewsArticleComment::getStatus, 1)
+                .orderByDesc(NewsArticleComment::getCreateTime));
+        return new PageResult<>(result.getTotal(), enrichComments(result.getRecords()));
+    }
+
+    @Override
+    @Transactional
+    public CommentVO addComment(Long id, CommentDTO dto) {
+        requirePublishedArticle(id);
+        NewsArticleComment comment = new NewsArticleComment();
+        comment.setArticleId(id);
+        comment.setUserId(BaseContext.getCurrentId());
+        comment.setContent(dto.getContent().trim());
+        comment.setStatus(1);
+        comment.setCreateTime(LocalDateTime.now());
+        commentMapper.insert(comment);
+        changeArticleCounter(id, "comment_count", 1);
+        recalculateSingleHotScore(id);
+        clearArticleCache(id);
+        return enrichComments(List.of(comment)).getFirst();
+    }
+
+    @Override
+    @Transactional
+    public void recordRead(Long id) {
+        requirePublishedArticle(id);
         NewsReadRecord record = new NewsReadRecord();
         record.setArticleId(id);
         record.setUserId(BaseContext.getCurrentId() == null ? 0L : BaseContext.getCurrentId());
@@ -335,7 +427,7 @@ public class ArticleServiceImpl implements ArticleService {
         articleMapper.update(null, new LambdaUpdateWrapper<NewsArticle>()
                 .eq(NewsArticle::getId, id)
                 .setSql("view_count = view_count + 1")
-                .setSql("hot_score = view_count + 1 + like_count * 3 - dislike_count"));
+                .setSql("hot_score = view_count + 1 + like_count * 4 + comment_count * 3 + favorite_count * 3 - dislike_count"));
         clearArticleCache(id);
     }
 
@@ -353,6 +445,10 @@ public class ArticleServiceImpl implements ArticleService {
             wrapper.orderByDesc(NewsArticle::getViewCount);
         } else if ("like".equals(normalizedSort)) {
             wrapper.orderByDesc(NewsArticle::getLikeCount);
+        } else if ("popular".equals(normalizedSort)) {
+            wrapper.orderByDesc(NewsArticle::getLikeCount)
+                    .orderByDesc(NewsArticle::getCommentCount)
+                    .orderByDesc(NewsArticle::getFavoriteCount);
         } else {
             wrapper.orderByDesc(NewsArticle::getHotScore);
         }
@@ -371,9 +467,11 @@ public class ArticleServiceImpl implements ArticleService {
             long hours = article.getPublishTime() == null ? 720 : Math.max(1, ChronoUnit.HOURS.between(article.getPublishTime(), now));
             BigDecimal recency = BigDecimal.valueOf(Math.max(0, 240 - hours)).divide(BigDecimal.TEN, 2, RoundingMode.HALF_UP);
             BigDecimal score = BigDecimal.valueOf(article.getViewCount() == null ? 0 : article.getViewCount())
-                    .add(BigDecimal.valueOf(article.getLikeCount() == null ? 0 : article.getLikeCount()).multiply(BigDecimal.valueOf(3)))
+                    .add(BigDecimal.valueOf(article.getLikeCount() == null ? 0 : article.getLikeCount()).multiply(BigDecimal.valueOf(4)))
+                    .add(BigDecimal.valueOf(article.getCommentCount() == null ? 0 : article.getCommentCount()).multiply(BigDecimal.valueOf(3)))
+                    .add(BigDecimal.valueOf(article.getFavoriteCount() == null ? 0 : article.getFavoriteCount()).multiply(BigDecimal.valueOf(3)))
                     .subtract(BigDecimal.valueOf(article.getDislikeCount() == null ? 0 : article.getDislikeCount()))
-                    .add(recency);
+                    .add(recency.multiply(BigDecimal.valueOf(8)));
             NewsArticle update = new NewsArticle();
             update.setId(article.getId());
             update.setHotScore(score);
@@ -422,6 +520,9 @@ public class ArticleServiceImpl implements ArticleService {
                 if (vote != null) {
                     vo.setUserVote(vote.getVoteType());
                 }
+                vo.setFavorited(favoriteMapper.exists(new LambdaQueryWrapper<NewsArticleFavorite>()
+                        .eq(NewsArticleFavorite::getArticleId, article.getId())
+                        .eq(NewsArticleFavorite::getUserId, BaseContext.getCurrentId())));
             }
             NewsArticleContent content = finalContentMap.get(article.getId());
             if (content != null) {
@@ -439,6 +540,14 @@ public class ArticleServiceImpl implements ArticleService {
         return article;
     }
 
+    private NewsArticle requirePublishedArticle(Long id) {
+        NewsArticle article = requireArticle(id);
+        if (!Objects.equals(article.getStatus(), ArticleStatus.PUBLISHED)) {
+            throw new BusinessException("资讯未发布");
+        }
+        return article;
+    }
+
     private void updateStatus(Long id, Integer status, String rejectReason) {
         NewsArticle article = requireArticle(id);
         article.setStatus(status);
@@ -451,14 +560,34 @@ public class ArticleServiceImpl implements ArticleService {
 
     private void changeVoteCount(Long id, int voteType, int delta) {
         if (voteType == 1) {
-            articleMapper.update(null, new LambdaUpdateWrapper<NewsArticle>()
-                    .eq(NewsArticle::getId, id)
-                    .setSql("like_count = GREATEST(like_count + (" + delta + "), 0)"));
+            changeArticleCounter(id, "like_count", delta);
         } else if (voteType == -1) {
-            articleMapper.update(null, new LambdaUpdateWrapper<NewsArticle>()
-                    .eq(NewsArticle::getId, id)
-                    .setSql("dislike_count = GREATEST(dislike_count + (" + delta + "), 0)"));
+            changeArticleCounter(id, "dislike_count", delta);
         }
+        recalculateSingleHotScore(id);
+    }
+
+    private void changeArticleCounter(Long id, String column, int delta) {
+        articleMapper.update(null, new LambdaUpdateWrapper<NewsArticle>()
+                .eq(NewsArticle::getId, id)
+                .setSql(column + " = GREATEST(" + column + " + (" + delta + "), 0)"));
+    }
+
+    private void recalculateSingleHotScore(Long id) {
+        NewsArticle article = requireArticle(id);
+        LocalDateTime now = LocalDateTime.now();
+        long hours = article.getPublishTime() == null ? 720 : Math.max(1, ChronoUnit.HOURS.between(article.getPublishTime(), now));
+        BigDecimal recency = BigDecimal.valueOf(Math.max(0, 240 - hours)).divide(BigDecimal.TEN, 2, RoundingMode.HALF_UP);
+        BigDecimal score = BigDecimal.valueOf(article.getViewCount() == null ? 0 : article.getViewCount())
+                .add(BigDecimal.valueOf(article.getLikeCount() == null ? 0 : article.getLikeCount()).multiply(BigDecimal.valueOf(4)))
+                .add(BigDecimal.valueOf(article.getCommentCount() == null ? 0 : article.getCommentCount()).multiply(BigDecimal.valueOf(3)))
+                .add(BigDecimal.valueOf(article.getFavoriteCount() == null ? 0 : article.getFavoriteCount()).multiply(BigDecimal.valueOf(3)))
+                .subtract(BigDecimal.valueOf(article.getDislikeCount() == null ? 0 : article.getDislikeCount()))
+                .add(recency.multiply(BigDecimal.valueOf(8)));
+        NewsArticle update = new NewsArticle();
+        update.setId(id);
+        update.setHotScore(score);
+        articleMapper.updateById(update);
     }
 
     private void insertAuditRecord(Long id, Integer status, String comment) {
@@ -513,6 +642,25 @@ public class ArticleServiceImpl implements ArticleService {
         return "平台编辑";
     }
 
+    private List<CommentVO> enrichComments(List<NewsArticleComment> comments) {
+        if (comments.isEmpty()) {
+            return List.of();
+        }
+        List<Long> userIds = comments.stream().map(NewsArticleComment::getUserId).distinct().toList();
+        Map<Long, AppUser> userMap = appUserMapper.selectBatchIds(userIds)
+                .stream()
+                .collect(Collectors.toMap(AppUser::getId, Function.identity()));
+        return comments.stream().map(comment -> {
+            CommentVO vo = BeanCopy.to(comment, CommentVO.class);
+            AppUser user = userMap.get(comment.getUserId());
+            if (user != null) {
+                vo.setNickname(StringUtils.hasText(user.getNickname()) ? user.getNickname() : user.getUsername());
+                vo.setAvatar(user.getAvatar());
+            }
+            return vo;
+        }).toList();
+    }
+
     private void clearArticleCache(Long id) {
         clearHotCaches();
         redisTemplate.delete(CacheKeys.DASHBOARD_TODAY);
@@ -522,10 +670,10 @@ public class ArticleServiceImpl implements ArticleService {
     }
 
     private String normalizeHotSort(String sort) {
-        if ("view".equalsIgnoreCase(sort) || "like".equalsIgnoreCase(sort)) {
+        if ("view".equalsIgnoreCase(sort) || "like".equalsIgnoreCase(sort) || "popular".equalsIgnoreCase(sort)) {
             return sort.toLowerCase();
         }
-        return "hot";
+        return "latest";
     }
 
     private String hotCacheKey(String sort) {
@@ -536,8 +684,10 @@ public class ArticleServiceImpl implements ArticleService {
         redisTemplate.delete(List.of(
                 CacheKeys.ARTICLE_HOT,
                 hotCacheKey("hot"),
+                hotCacheKey("latest"),
                 hotCacheKey("view"),
-                hotCacheKey("like")
+                hotCacheKey("like"),
+                hotCacheKey("popular")
         ));
     }
 

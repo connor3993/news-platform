@@ -6,6 +6,8 @@ DROP TABLE IF EXISTS sys_operation_log;
 DROP TABLE IF EXISTS news_daily_stats;
 DROP TABLE IF EXISTS news_read_record;
 DROP TABLE IF EXISTS news_audit_record;
+DROP TABLE IF EXISTS news_article_comment;
+DROP TABLE IF EXISTS news_article_favorite;
 DROP TABLE IF EXISTS news_article_vote;
 DROP TABLE IF EXISTS news_article_content;
 DROP TABLE IF EXISTS news_article;
@@ -63,6 +65,8 @@ CREATE TABLE news_article (
   view_count BIGINT NOT NULL DEFAULT 0,
   like_count BIGINT NOT NULL DEFAULT 0,
   dislike_count BIGINT NOT NULL DEFAULT 0,
+  favorite_count BIGINT NOT NULL DEFAULT 0,
+  comment_count BIGINT NOT NULL DEFAULT 0,
   hot_score DECIMAL(12,2) NOT NULL DEFAULT 0,
   reject_reason VARCHAR(255),
   create_time DATETIME,
@@ -84,6 +88,27 @@ CREATE TABLE news_article_vote (
   update_time DATETIME,
   UNIQUE KEY uk_article_vote_user_article (user_id, article_id),
   KEY idx_article_vote_article (article_id)
+);
+
+CREATE TABLE news_article_favorite (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  user_id BIGINT NOT NULL,
+  article_id BIGINT NOT NULL,
+  create_time DATETIME,
+  UNIQUE KEY uk_article_favorite_user_article (user_id, article_id),
+  KEY idx_article_favorite_user (user_id),
+  KEY idx_article_favorite_article (article_id)
+);
+
+CREATE TABLE news_article_comment (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  article_id BIGINT NOT NULL,
+  user_id BIGINT NOT NULL,
+  content VARCHAR(500) NOT NULL,
+  status TINYINT NOT NULL DEFAULT 1 COMMENT '1正常 0隐藏',
+  create_time DATETIME,
+  KEY idx_article_comment_article (article_id, create_time),
+  KEY idx_article_comment_user (user_id)
 );
 
 CREATE TABLE news_article_content (
@@ -158,12 +183,12 @@ VALUES
 (4, '国际', 4, 1, NOW(), NOW(), 1, 1);
 
 INSERT INTO news_article
-(id, title, summary, cover_url, category_id, author_id, author_type, status, publish_time, view_count, like_count, dislike_count, hot_score, create_time, update_time, create_user, update_user)
+(id, title, summary, cover_url, category_id, author_id, author_type, status, publish_time, view_count, like_count, dislike_count, favorite_count, comment_count, hot_score, create_time, update_time, create_user, update_user)
 VALUES
-(1, 'AI 技术带来媒体生产新变化', '围绕智能采编、内容分发和审核效率的行业观察。', 'https://example.com/cover-ai.jpg', 1, 1, 'admin', 4, NOW(), 1280, 18, 1, 1320.50, NOW(), NOW(), 1, 1),
-(2, '本地媒体探索数据新闻新路径', '数据可视化正在成为公共议题报道的重要表达方式。', 'https://example.com/cover-data.jpg', 3, 1, 'admin', 4, NOW(), 860, 9, 0, 900.00, NOW(), NOW(), 1, 1),
-(3, '跨境资讯平台加速内容协作', '多语言生产与实时审核成为媒体平台升级重点。', 'https://example.com/cover-global.jpg', 4, 1, 'admin', 1, NULL, 0, 0, 0, 0, NOW(), NOW(), 1, 1),
-(4, '用户投稿：社区媒体如何连接本地生活', '来自普通用户的本地资讯观察，等待管理员审核。', '', 3, 1, 'user', 1, NULL, 0, 0, 0, 0, NOW(), NOW(), 1, 1);
+(1, 'AI 技术带来媒体生产新变化', '围绕智能采编、内容分发和审核效率的行业观察。', 'https://example.com/cover-ai.jpg', 1, 1, 'admin', 4, NOW(), 1280, 18, 1, 6, 2, 1480.50, NOW(), NOW(), 1, 1),
+(2, '本地媒体探索数据新闻新路径', '数据可视化正在成为公共议题报道的重要表达方式。', 'https://example.com/cover-data.jpg', 3, 1, 'admin', 4, NOW(), 860, 9, 0, 3, 1, 980.00, NOW(), NOW(), 1, 1),
+(3, '跨境资讯平台加速内容协作', '多语言生产与实时审核成为媒体平台升级重点。', 'https://example.com/cover-global.jpg', 4, 1, 'admin', 1, NULL, 0, 0, 0, 0, 0, 0, NOW(), NOW(), 1, 1),
+(4, '用户投稿：社区媒体如何连接本地生活', '来自普通用户的本地资讯观察，等待管理员审核。', '', 3, 1, 'user', 1, NULL, 0, 0, 0, 0, 0, 0, NOW(), NOW(), 1, 1);
 
 INSERT INTO news_article_content
 (article_id, content)
@@ -172,6 +197,19 @@ VALUES
 (2, '<p>数据新闻强调事实、结构与可视化表达。本地媒体通过数据看板与专题报道提升公共服务能力。</p>'),
 (3, '<p>跨境资讯协作需要更完善的权限、审核与实时通知机制，保障内容分发效率和合规性。</p>'),
 (4, '<p>社区媒体的价值在于发现身边的公共议题。用户提交后，平台管理员会进行内容审核、修改和发布。</p>');
+
+INSERT INTO news_article_favorite
+(user_id, article_id, create_time)
+VALUES
+(1, 1, NOW()),
+(1, 2, NOW());
+
+INSERT INTO news_article_comment
+(article_id, user_id, content, status, create_time)
+VALUES
+(1, 1, '这篇文章很适合讲智能采编场景。', 1, NOW()),
+(1, 1, '热度计算可以结合阅读、点赞和收藏继续优化。', 1, NOW()),
+(2, 1, '数据新闻这个方向很有现实价值。', 1, NOW());
 
 INSERT INTO news_daily_stats
 (stat_date, article_count, publish_count, view_count, audit_count, reject_count, create_time)
