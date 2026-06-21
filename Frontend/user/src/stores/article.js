@@ -53,7 +53,17 @@ export const useArticleStore = defineStore('article', () => {
    */
   async function fetchArticleDetail(id) {
     const res = await getArticleDetailApi(id)
-    currentArticle.value = res.data
+    const detail = res.data
+    if (localStorage.getItem('user_token') && detail && typeof detail.favorited !== 'boolean') {
+      try {
+        const favoriteRes = await getFavoriteArticlesApi({ page: 1, pageSize: 1000 })
+        const favorites = favoriteRes.data?.records || []
+        detail.favorited = favorites.some((item) => String(item.id) === String(id))
+      } catch (err) {
+        detail.favorited = false
+      }
+    }
+    currentArticle.value = detail
     return res.data
   }
 
