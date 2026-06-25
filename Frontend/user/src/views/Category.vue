@@ -151,35 +151,43 @@ onUnmounted(() => {
 
 <style scoped>
 .category-page {
-  padding-bottom: 20px;
+  padding-bottom: 24px;
 }
 
 .article-list {
   padding-top: 4px;
+  padding-bottom: 24px;
 }
 
 .article-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
 }
 
 .load-more {
   display: flex;
   justify-content: center;
-  padding: 20px 0;
+  padding: 24px 0;
+}
+
+@media (max-width: 767px) {
+  .article-grid {
+    gap: 12px;
+  }
 }
 
 @media (min-width: 768px) {
   .article-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 16px;
-    max-width: 860px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
   }
+}
 
-  .article-grid > * {
-    margin-bottom: 0;
+@media (min-width: 1024px) {
+  .article-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
   }
 }
 </style>

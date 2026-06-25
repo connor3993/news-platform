@@ -2,26 +2,17 @@
   <div class="search-page page">
     <!-- Search header -->
     <div class="search-header">
-      <div class="container">
+      <div class="container-narrow">
         <div class="search-input-wrap">
-          <el-icon class="search-icon" :size="18"><Search /></el-icon>
-          <el-input
+          <Search :size="18" class="search-icon" />
+          <input
             ref="searchInputRef"
             v-model="keyword"
+            type="text"
             placeholder="搜索新闻标题或关键词"
-            size="large"
-            clearable
             @keyup.enter="handleSearch"
-            @clear="clearSearch"
+            @input="hasSearched && (hasSearched = false)"
           />
-          <el-button
-            type="primary"
-            size="large"
-            :loading="searching"
-            @click="handleSearch"
-          >
-            搜索
-          </el-button>
         </div>
       </div>
     </div>
@@ -31,21 +22,19 @@
       <div class="recent-header">
         <span class="recent-title">最近搜索</span>
         <span class="recent-clear" @click="clearRecentSearches">
-          <el-icon><Delete /></el-icon>
+          <Delete :size="14" />
           清除
         </span>
       </div>
       <div class="recent-tags">
-        <el-tag
+        <span
           v-for="(item, index) in recentSearches"
           :key="index"
           class="recent-tag"
-          effect="plain"
-          round
           @click="searchByRecent(item)"
         >
           {{ item }}
-        </el-tag>
+        </span>
       </div>
     </div>
 
@@ -96,6 +85,7 @@
 
 <script setup>
 import { ref, computed, onMounted, nextTick } from 'vue'
+import { Search, Delete } from 'lucide-vue-next'
 import { useArticleStore } from '@/stores/article'
 import ArticleCard from '@/components/ArticleCard.vue'
 import EmptyState from '@/components/EmptyState.vue'
@@ -161,12 +151,6 @@ const handleSearch = async () => {
   }
 }
 
-const clearSearch = () => {
-  keyword.value = ''
-  hasSearched.value = false
-  articleStore.resetArticles()
-}
-
 const searchByRecent = (kw) => {
   keyword.value = kw
   handleSearch()
@@ -202,7 +186,7 @@ onMounted(() => {
 
 <style scoped>
 .search-page {
-  padding-bottom: 20px;
+  padding-bottom: 24px;
 }
 
 .search-header {
@@ -217,18 +201,40 @@ onMounted(() => {
 .search-input-wrap {
   display: flex;
   align-items: center;
-  gap: 12px;
-  max-width: 700px;
+  max-width: 640px;
   margin: 0 auto;
+  height: 48px;
+  padding: 0 16px;
+  background-color: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.search-input-wrap:hover,
+.search-input-wrap:focus-within {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-md);
 }
 
 .search-icon {
   color: var(--text-tertiary);
   flex-shrink: 0;
+  margin-right: 10px;
 }
 
-.search-input-wrap :deep(.el-input) {
+.search-input-wrap input {
   flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+}
+
+.search-input-wrap input::placeholder {
+  color: var(--text-tertiary);
 }
 
 /* Recent searches */
@@ -269,12 +275,23 @@ onMounted(() => {
 }
 
 .recent-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 16px;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  background-color: var(--bg-white);
+  border: 1px solid var(--border-color);
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .recent-tag:hover {
   color: var(--primary-color);
   border-color: var(--primary-color);
+  background-color: var(--primary-light);
 }
 
 /* Results */
@@ -296,46 +313,43 @@ onMounted(() => {
 }
 
 .article-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
 }
 
 .load-more {
   display: flex;
   justify-content: center;
-  padding: 20px 0;
+  padding: 24px 0;
 }
 
-/* Mobile: full screen search */
+/* Mobile */
 @media (max-width: 767px) {
   .search-header {
     padding: 10px 0;
   }
 
   .search-input-wrap {
-    gap: 8px;
-  }
-
-  .search-input-wrap :deep(.el-button) {
-    padding: 8px 12px;
+    height: 44px;
   }
 
   .article-grid {
-    gap: 0;
+    gap: 12px;
   }
 }
 
-/* PC: two column */
 @media (min-width: 768px) {
   .article-grid {
-    display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
+    gap: 20px;
   }
+}
 
-  .article-grid > * {
-    margin-bottom: 0;
+@media (min-width: 1024px) {
+  .article-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
   }
 }
 </style>

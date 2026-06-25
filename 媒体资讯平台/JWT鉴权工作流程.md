@@ -23,7 +23,7 @@
 **管理端登录流程：**
 
 1. 接收 `LoginDTO`（username + password）
-2. 通过 MyBatis Plus 查询 `admin_user` 表
+2. 通过 MyBatis 查询 `admin_user` 表
 3. 用 BCrypt 校验密码
 4. 校验账号状态（status=1 才允许登录）
 5. 调用 `JwtUtil.createJwt()` 生成 Token
@@ -32,7 +32,7 @@
 **用户端登录流程：**
 
 1. 接收 `LoginDTO`（username + password）
-2. 通过 MyBatis Plus 查询 `app_user` 表
+2. 通过 MyBatis 查询 `app_user` 表
 3. 密码校验支持 BCrypt 加密密码和明文密码两种格式（兼容旧数据）
 4. 校验账号状态
 5. 调用 `JwtUtil.createJwt()` 生成 Token

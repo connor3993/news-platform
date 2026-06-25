@@ -52,10 +52,6 @@ onMounted(async () => {
   padding: 24px 0 40px;
 }
 
-.favorites-container {
-  max-width: 900px;
-}
-
 .page-head {
   margin-bottom: 18px;
 }
@@ -72,6 +68,27 @@ onMounted(async () => {
 
 .article-grid {
   display: grid;
-  gap: 14px;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 767px) {
+  .article-grid {
+    gap: 12px;
+  }
+}
+
+@media (min-width: 768px) {
+  .article-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .article-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
 }
 </style>

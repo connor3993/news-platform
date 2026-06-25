@@ -7,20 +7,14 @@
           <p>聚合媒体、科技、财经与国际新闻，快速捕捉正在发生的重点。</p>
         </div>
         <div class="hero-search" @click="isMobile && router.push('/search')">
-        <el-input
-          v-model="searchKeyword"
-          placeholder="搜索新闻..."
-          size="large"
-          clearable
+          <Search :size="18" class="search-icon" />
+          <input
+            v-model="searchKeyword"
+            type="text"
+            placeholder="搜索新闻..."
             :readonly="isMobile"
-          @keyup.enter="handleSearch"
-          @clear="handleSearch"
-        >
-          <template #prefix>
-            <el-icon><Search /></el-icon>
-          </template>
-        </el-input>
-          <el-button v-if="!isMobile" type="primary" @click.stop="handleSearch">搜索</el-button>
+            @keyup.enter="handleSearch"
+          />
         </div>
       </div>
     </section>
@@ -57,9 +51,10 @@
     <div class="article-list container">
       <div class="article-grid" v-if="articleStore.articleList.length > 0">
         <ArticleCard
-          v-for="article in articleStore.articleList"
+          v-for="(article, index) in articleStore.articleList"
           :key="article.id"
           :article="article"
+          :featured="index === 0"
         />
       </div>
 
@@ -94,8 +89,9 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { Search } from 'lucide-vue-next'
 import { useCategoryStore } from '@/stores/category'
 import { useArticleStore } from '@/stores/article'
 import ArticleCard from '@/components/ArticleCard.vue'
@@ -199,8 +195,6 @@ onMounted(async () => {
   await loadArticles()
 })
 
-// Clean up on unmount
-import { onUnmounted } from 'vue'
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
 })
@@ -208,11 +202,11 @@ onUnmounted(() => {
 
 <style scoped>
 .home-page {
-  padding-bottom: 20px;
+  padding-bottom: 24px;
 }
 
 .home-hero {
-  background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
   border-bottom: 1px solid var(--border-color);
 }
 
@@ -220,35 +214,65 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 32px;
-  padding-top: 26px;
-  padding-bottom: 26px;
+  gap: 40px;
+  padding-top: 28px;
+  padding-bottom: 28px;
 }
 
 .hero-copy h1 {
   font-size: 28px;
   line-height: 1.25;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--text-primary);
   margin-bottom: 8px;
+  letter-spacing: -0.02em;
 }
 
 .hero-copy p {
   font-size: var(--font-size-base);
   color: var(--text-secondary);
+  max-width: 360px;
 }
 
 .hero-search {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 10px;
-  width: min(520px, 48%);
+  width: min(420px, 46%);
   flex-shrink: 0;
+  height: 48px;
+  padding: 0 16px;
+  background-color: var(--bg-white);
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.hero-search :deep(.el-input__wrapper) {
-  border-radius: 8px;
-  box-shadow: 0 0 0 1px #dce3ec inset;
+.hero-search:hover,
+.hero-search:focus-within {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-md);
+}
+
+.search-icon {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  margin-right: 10px;
+}
+
+.hero-search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+}
+
+.hero-search input::placeholder {
+  color: var(--text-tertiary);
 }
 
 /* Sort bar */
@@ -256,7 +280,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 4px;
+  padding-top: 8px;
   padding-bottom: 16px;
 }
 
@@ -293,45 +317,28 @@ onUnmounted(() => {
 }
 
 /* Article grid */
+.article-list {
+  padding-top: 4px;
+  padding-bottom: 24px;
+}
+
 .article-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
 }
 
 .load-more {
   display: flex;
   justify-content: center;
-  padding: 20px 0;
-}
-
-/* PC: two-column layout */
-@media (min-width: 768px) {
-  .article-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 16px;
-    max-width: 860px;
-  }
-
-  .article-grid > * {
-    margin-bottom: 0;
-  }
-}
-
-/* Large screen: wider */
-@media (min-width: 1024px) {
-  .article-grid {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 20px;
-  }
+  padding: 24px 0;
 }
 
 @media (max-width: 767px) {
   .hero-inner {
     display: block;
     padding-top: 16px;
-    padding-bottom: 12px;
+    padding-bottom: 14px;
   }
 
   .hero-copy h1,
@@ -341,6 +348,25 @@ onUnmounted(() => {
 
   .hero-search {
     width: 100%;
+    height: 44px;
+  }
+
+  .article-grid {
+    gap: 12px;
+  }
+}
+
+@media (min-width: 768px) {
+  .article-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .article-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
   }
 }
 </style>

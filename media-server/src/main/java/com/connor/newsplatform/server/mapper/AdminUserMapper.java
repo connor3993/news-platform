@@ -1,9 +1,24 @@
 package com.connor.newsplatform.server.mapper;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.connor.newsplatform.pojo.entity.AdminUser;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 
 @Mapper
-public interface AdminUserMapper extends BaseMapper<AdminUser> {
+public interface AdminUserMapper {
+
+    /** 根据用户名查询管理员 */
+    @Select("select * from admin_user where username = #{username}")
+    AdminUser getByUsername(@Param("username") String username);
+
+    /** 根据id查询管理员 */
+    @Select("select * from admin_user where id = #{id}")
+    AdminUser getById(@Param("id") Long id);
+
+    /** 新增管理员 */
+    void insert(AdminUser adminUser);
+
+    /** 修改管理员（动态SQL） */
+    void update(AdminUser adminUser);
 }

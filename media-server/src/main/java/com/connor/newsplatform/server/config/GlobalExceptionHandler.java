@@ -21,7 +21,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({JwtException.class, IllegalArgumentException.class})
     public Result<Void> jwt(Exception e) {
-        return Result.error(e.getMessage() == null ? "登录已过期" : e.getMessage());
+        return new Result<>(401, "登录已过期，请重新登录", null);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

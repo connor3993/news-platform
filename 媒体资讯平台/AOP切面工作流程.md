@@ -67,10 +67,10 @@ public class AutoFillAspect {
 
 #### 使用方式
 
-在 Mapper 接口的方法上标注注解：
+项目已从 MyBatis Plus 迁移至 MyBatis，不再继承 `BaseMapper`。`@AutoFill` 注解可直接标注在 Mapper 接口的方法上，通过 AOP 切面在方法执行前反射填充公共字段：
 
 ```java
-public interface ArticleMapper extends BaseMapper<NewsArticle> {
+public interface ArticleMapper {
 
     @AutoFill(OperationType.INSERT)
     int insert(NewsArticle article);
@@ -79,7 +79,7 @@ public interface ArticleMapper extends BaseMapper<NewsArticle> {
     int update(NewsArticle article);
 }
 
-public interface CategoryMapper extends BaseMapper<NewsCategory> {
+public interface CategoryMapper {
 
     @AutoFill(OperationType.INSERT)
     int insert(NewsCategory category);
@@ -87,6 +87,15 @@ public interface CategoryMapper extends BaseMapper<NewsCategory> {
     @AutoFill(OperationType.UPDATE)
     int update(NewsCategory category);
 }
+```
+
+如果希望更直观的控制，也可以在 Service 层手动设值：
+
+```java
+article.setCreateTime(LocalDateTime.now());
+article.setUpdateTime(LocalDateTime.now());
+article.setCreateUser(BaseContext.getCurrentId());
+article.setUpdateUser(BaseContext.getCurrentId());
 ```
 
 #### 执行流程
@@ -105,7 +114,7 @@ Service 调用 mapper.insert(article)
   │     ├── article.setCreateUser(currentId)
   │     └── article.setUpdateUser(currentId)
   │
-  MyBatis Plus 执行 INSERT SQL（此时 entity 已包含公共字段值）
+  MyBatis 执行 INSERT SQL（此时 entity 已包含公共字段值）
   │
   数据写入数据库 ✓
 ```
@@ -164,7 +173,7 @@ public class LogRecordAspect {
                       .toList()
         );
 
-        // 3. 通过 JdbcTemplate 直接插入日志（不走 MyBatis Plus，避免循环依赖）
+        // 3. 通过 JdbcTemplate 直接插入日志（避免依赖 Mapper 层）
         jdbcTemplate.update(
             "INSERT INTO sys_operation_log " +
             "(operator_id, operator_type, operation, request_uri, " +

@@ -1,21 +1,23 @@
 <template>
-  <div class="category-tabs container">
-    <div class="tabs-scroll" role="tablist" aria-label="新闻分类">
-      <div
-        class="tab-item"
-        :class="{ active: !activeId }"
-        @click="handleSelect(null)"
-      >
-        全部
-      </div>
-      <div
-        v-for="cat in categories"
-        :key="cat.id"
-        class="tab-item"
-        :class="{ active: activeId === cat.id }"
-        @click="handleSelect(cat.id)"
-      >
-        {{ cat.name }}
+  <div class="category-tabs-wrapper">
+    <div class="category-tabs container">
+      <div class="tabs-scroll" role="tablist" aria-label="新闻分类">
+        <div
+          class="tab-item"
+          :class="{ active: !activeId }"
+          @click="handleSelect(null)"
+        >
+          全部
+        </div>
+        <div
+          v-for="cat in categories"
+          :key="cat.id"
+          class="tab-item"
+          :class="{ active: activeId === cat.id }"
+          @click="handleSelect(cat.id)"
+        >
+          {{ cat.name }}
+        </div>
       </div>
     </div>
   </div>
@@ -41,26 +43,27 @@ const handleSelect = (id) => {
 </script>
 
 <style scoped>
-.category-tabs {
+.category-tabs-wrapper {
   position: sticky;
   top: var(--navbar-height);
   z-index: 50;
-  padding-top: 14px;
-  padding-bottom: 10px;
+  background-color: var(--bg-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.category-tabs {
+  padding-top: 12px;
+  padding-bottom: 12px;
 }
 
 .tabs-scroll {
   display: flex;
   overflow-x: auto;
   white-space: nowrap;
-  padding: 6px;
   scrollbar-width: none;
   -ms-overflow-style: none;
-  gap: 6px;
-  background-color: var(--bg-white);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  box-shadow: var(--shadow-sm);
+  gap: 8px;
+  padding: 4px 0;
 }
 
 .tabs-scroll::-webkit-scrollbar {
@@ -71,8 +74,8 @@ const handleSelect = (id) => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 34px;
-  padding: 0 14px;
+  height: 36px;
+  padding: 0 16px;
   font-size: var(--font-size-base);
   color: var(--text-secondary);
   cursor: pointer;
@@ -80,36 +83,42 @@ const handleSelect = (id) => {
   position: relative;
   flex-shrink: 0;
   user-select: none;
-  border-radius: 6px;
-}
-
-.tab-item::after {
-  display: none;
+  border-radius: 18px;
+  background-color: var(--bg-white);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
 }
 
 .tab-item.active {
   color: var(--primary-color);
   font-weight: 600;
   background-color: var(--primary-light);
+  border-color: var(--primary-light);
 }
 
-.tab-item:hover {
+.tab-item:hover:not(.active) {
   color: var(--primary-color);
-  background-color: var(--primary-light);
+  border-color: var(--border-strong);
+  background-color: var(--bg-white);
+  box-shadow: var(--shadow-md);
 }
 
 /* Mobile: smaller tabs */
 @media (max-width: 767px) {
-  .category-tabs {
+  .category-tabs-wrapper {
     top: 0;
+  }
+
+  .category-tabs {
     padding-top: 10px;
-    padding-bottom: 8px;
+    padding-bottom: 10px;
   }
 
   .tab-item {
     height: 32px;
     padding: 0 12px;
     font-size: var(--font-size-sm);
+    border-radius: 16px;
   }
 }
 </style>

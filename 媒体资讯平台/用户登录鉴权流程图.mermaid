@@ -1,0 +1,71 @@
+flowchart TD
+    A["前端 POST /user/auth/login\n携带 LoginDTO (username + password)"] --> B{请求路径是否被\n拦截器拦截?}
+    B -->|"excludePathPatterns\n排除 /user/auth/login"| C["直接到达 UserAuthController.login()"]
+
+    C --> D["AuthServiceImpl.userLogin()"]
+    D --> E{"查询 app_user 表\n用户名是否存在?"}
+    E -->|"不存在"| F["throw BusinessException\n'用户名或密码错误'"]
+    E -->|"存在"| G{"passwordMatches()\n密码校验"}
+
+    G -->|"密码以 $2a$/$2b$/$2y$ 开头"| H["BCrypt 加密比对"]
+    G -->|"明文密码"| I["直接字符串比对"]
+
+    H --> J{密码是否匹配?}
+    I --> J
+    J -->|"不匹配"| F
+    J -->|"匹配"| K{"账号状态 status\n是否为 null 或 0?"}
+    K -->|"是"| L["throw BusinessException\n'账号已禁用'"]
+    K -->|"否"| M["构造 LoginVO"]
+
+    M --> N["JwtUtil.createJwt()\n生成 JWT Token"]
+    N --> O["Payload 包含:\nuserId, userType='user', username"]
+    O --> P["签名密钥: userSecretKey\n有效期: 86400000ms (24h)"]
+    P --> Q["返回 Result<LoginVO>\n包含 token + 用户基本信息"]
+    Q --> R["前端存储到 localStorage:\nuser_token + user_info"]
+    R --> S["前端建立 WebSocket\n/ws/notify/user/{userId}"]
+
+    subgraph 后续请求鉴权流程
+        T["前端发起请求\nAxios 拦截器自动添加\nauthentication 请求头"] --> U{JwtTokenInterceptor拦截器\npreHandle执行}
+        U --> V{"URI 以 /admin/ 开头?"}
+        V -->|"是"| W["从 header 'token' 取 token\n使用 adminSecretKey 解析"]
+        V -->|"否"| X["从 header 'authentication' 取 token\n使用 userSecretKey 解析"]
+
+        W --> Y{token 是否为空?}
+        X --> Y
+        Y -->|"是"| Z{isOptionalUserAuth?\nURI 以 /user/article/ 开头?}
+        Z -->|"是"| AA["放行, 不解析用户信息\n游客可浏览文章"]
+        Z -->|"否"| AB["throw IllegalArgumentException\n'未登录或登录已过期'"]
+
+        Y -->|"否"| AC["JwtUtil.parseJwt()\n解析 JWT"]
+        AC --> AD{userType 是否\n与当前端匹配?}
+        AD -->|"不匹配"| AE["throw IllegalArgumentException\n'token 类型不匹配'"]
+        AD -->|"匹配"| AF["BaseContext.setCurrentId(userId)\nBaseContext.setCurrentType(userType)"]
+    end
+
+    subgraph 请求处理中
+        AF --> AG["Service 层通过\nBaseContext.getCurrentId()\n获取当前用户 ID"]
+        AG --> AH["阅读记录关联用户\n点赞/收藏记录操作人\n用户投稿设置 authorId\n修改资料定位当前用户"]
+    end
+
+    subgraph 请求结束
+        AH --> AI["afterCompletion()\nBaseContext.removeCurrent()\n清理 ThreadLocal"]
+    end
+
+    subgraph Token 过期处理
+        AJ["前端带过期 token 请求"] --> AK["JwtUtil.parseJwt() 抛 ExpiredJwtException"]
+        AK --> AL["GlobalExceptionHandler 捕获\n返回错误响应"]
+        AL --> AM["前端 Axios 拦截器检测 401/403\n清除 localStorage"]
+        AM --> AN["跳转到 /login 页面"]
+    end
+
+    Q --> T
+
+    style A fill:#e1f5fe
+    style Q fill:#c8e6c9
+    style F fill:#ffcdd2
+    style L fill:#ffcdd2
+    style AB fill:#ffcdd2
+    style AE fill:#ffcdd2
+    style AN fill:#fff9c4
+    style AF fill:#c8e6c9
+    style AI fill:#fff9c4
