@@ -11,7 +11,6 @@ public class AdminUser {
     private String password;
     private String name;
     private String phone;
-    private String role;
     private Integer status;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;

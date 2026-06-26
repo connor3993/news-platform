@@ -6,7 +6,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @Data
 @ConfigurationProperties(prefix = "media.jwt")
 public class JwtProperties {
-    private String adminSecretKey = "media-admin-secret";
-    private String userSecretKey = "media-user-secret";
+    private String secretKey = "media-news-secret-key";
     private long ttl = 7200000L;
 }

@@ -24,11 +24,11 @@ mybatis:
   type-aliases-package: com.connor.newsplatform.pojo.entity
   configuration:
     map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 
 media:
   jwt:
-    admin-secret-key: media-admin-secret-media-admin-secret
-    user-secret-key: media-user-secret-media-user-secret
+    secret-key: media-news-secret-key
     ttl: 86400000
   oss:
     endpoint: your-endpoint

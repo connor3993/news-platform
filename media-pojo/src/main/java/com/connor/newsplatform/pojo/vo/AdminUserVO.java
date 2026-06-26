@@ -8,6 +8,5 @@ public class AdminUserVO {
     private String username;
     private String name;
     private String phone;
-    private String role;
     private Integer status;
 }

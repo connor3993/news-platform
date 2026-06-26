@@ -12,11 +12,6 @@
         <el-descriptions-item label="姓名">
           {{ adminStore.adminInfo.name }}
         </el-descriptions-item>
-        <el-descriptions-item label="角色">
-          <el-tag type="primary" effect="plain">
-            {{ adminStore.adminInfo.role || '管理员' }}
-          </el-tag>
-        </el-descriptions-item>
       </el-descriptions>
 
       <div style="margin-top: 32px;">

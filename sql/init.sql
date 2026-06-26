@@ -21,7 +21,6 @@ CREATE TABLE admin_user (
   password VARCHAR(128) NOT NULL,
   name VARCHAR(64) NOT NULL,
   phone VARCHAR(20),
-  role VARCHAR(32) NOT NULL DEFAULT 'editor',
   status TINYINT NOT NULL DEFAULT 1 COMMENT '1启用 0禁用',
   create_time DATETIME,
   update_time DATETIME,
@@ -164,15 +163,14 @@ CREATE TABLE sys_operation_log (
 );
 
 INSERT INTO admin_user
-(id, username, password, name, phone, role, status, create_time, update_time, create_user, update_user)
+(id, username, password, name, phone, status, create_time, update_time, create_user, update_user)
 VALUES
-(1, 'admin', '123456', '管理员', '13800000000', 'admin', 1, NOW(), NOW(), 1, 1),
-(2, 'editor', '123456', '内容编辑', '13800000001', 'editor', 1, NOW(), NOW(), 1, 1);
+(1, 'admin', '$2a$10$2QIWdtDgCc4eNDh62tdpi.Lj.04BibsiW15ltXxk7v2UZZnINZfge', '管理员', '13800000000', 1, NOW(), NOW(), 1, 1);
 
 INSERT INTO app_user
 (id, username, password, nickname, avatar, status, create_time, update_time)
 VALUES
-(1, 'zhangsan', '123456', '张三', 'https://example.com/avatar.png', 1, NOW(), NOW());
+(1, 'zhangsan', '$2a$10$2QIWdtDgCc4eNDh62tdpi.Lj.04BibsiW15ltXxk7v2UZZnINZfge', '张三', 'https://example.com/avatar.png', 1, NOW(), NOW());
 
 INSERT INTO news_category
 (id, name, sort, status, create_time, update_time, create_user, update_user)

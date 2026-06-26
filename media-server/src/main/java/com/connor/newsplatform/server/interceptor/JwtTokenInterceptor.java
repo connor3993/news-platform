@@ -20,26 +20,36 @@ public class JwtTokenInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+        // OPTIONS 预检请求直接放行
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             return true;
         }
+
         String uri = request.getRequestURI();
-        boolean admin = uri.startsWith("/admin/");
-        String token = admin ? request.getHeader("token") : request.getHeader("authentication");
+
+        // 从 token 请求头获取令牌
+        String token = request.getHeader("token");
         if (token == null || token.isBlank()) {
+            // 用户端部分接口允许不登录访问
             if (isOptionalUserAuth(uri)) {
                 return true;
             }
             throw new IllegalArgumentException("未登录或登录已过期");
         }
-        String secret = admin ? jwtProperties.getAdminSecretKey() : jwtProperties.getUserSecretKey();
-        Claims claims = JwtUtil.parseJwt(secret, token);
-        String expectedType = admin ? JwtClaimsConstant.ADMIN : JwtClaimsConstant.USER;
-        if (!expectedType.equals(claims.get(JwtClaimsConstant.USER_TYPE, String.class))) {
+
+        // 解析 Token
+        Claims claims = JwtUtil.parseJwt(jwtProperties.getSecretKey(), token);
+
+        // 校验 userType 与请求路径是否匹配（防止用户 token 访问管理端接口）
+        String userType = claims.get(JwtClaimsConstant.USER_TYPE, String.class);
+        String expectedType = uri.startsWith("/admin/") ? JwtClaimsConstant.ADMIN : JwtClaimsConstant.USER;
+        if (!expectedType.equals(userType)) {
             throw new IllegalArgumentException("token 类型不匹配");
         }
+
+        // 将用户信息存入线程上下文，供后续业务代码使用
         BaseContext.setCurrentId(claims.get(JwtClaimsConstant.USER_ID, Long.class));
-        BaseContext.setCurrentType(expectedType);
+        BaseContext.setCurrentType(userType);
         return true;
     }
 

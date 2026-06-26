@@ -18,12 +18,12 @@ const request = axios.create({
   }
 })
 
-// Request interceptor: attach authentication header
+// Request interceptor: attach token header
 request.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('user_token')
     if (token) {
-      config.headers['authentication'] = token
+      config.headers['token'] = token
     }
     return config
   },

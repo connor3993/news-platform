@@ -5,8 +5,8 @@
 
     <!-- 新增管理员 -->
     <insert id="insert" parameterType="AdminUser" useGeneratedKeys="true" keyProperty="id">
-        insert into admin_user (username, password, name, phone, role, status, create_time, update_time, create_user, update_user)
-        values (#{username}, #{password}, #{name}, #{phone}, #{role}, #{status}, #{createTime}, #{updateTime}, #{createUser}, #{updateUser})
+        insert into admin_user (username, password, name, phone, status, create_time, update_time, create_user, update_user)
+        values (#{username}, #{password}, #{name}, #{phone}, #{status}, #{createTime}, #{updateTime}, #{createUser}, #{updateUser})
     </insert>
 
     <!-- 修改管理员（动态SQL，只更新非空字段） -->
@@ -16,7 +16,6 @@
             <if test="password != null">password = #{password},</if>
             <if test="name != null">name = #{name},</if>
             <if test="phone != null">phone = #{phone},</if>
-            <if test="role != null">role = #{role},</if>
             <if test="status != null">status = #{status},</if>
             <if test="updateTime != null">update_time = #{updateTime},</if>
             <if test="updateUser != null">update_user = #{updateUser}</if>

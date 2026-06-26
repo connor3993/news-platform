@@ -47,23 +47,52 @@ public class AuthServiceImpl implements AuthService {
      */
     @Override
     public LoginVO adminLogin(LoginDTO dto) {
-        // 1. 查询管理员
         AdminUser user = adminUserMapper.getByUsername(dto.getUsername());
-        if (user == null || !passwordMatches(dto.getPassword(), user.getPassword())) {
-            throw new BusinessException("用户名或密码错误");
-        }
-        // 2. 检查账号状态
-        if (user.getStatus() == null || user.getStatus() == 0) {
-            throw new BusinessException("账号已禁用");
-        }
-        // 3. 构造返回数据
+        checkPassword(dto.getPassword(), user == null ? null : user.getPassword());
+        checkAccountStatus(user.getStatus());
+
         LoginVO vo = new LoginVO();
         vo.setId(user.getId());
         vo.setUsername(user.getUsername());
         vo.setName(user.getName());
-        vo.setRole(user.getRole());
         vo.setToken(createToken(user.getId(), JwtClaimsConstant.ADMIN, user.getUsername()));
         return vo;
+    }
+
+    /**
+     * 用户登录
+     */
+    @Override
+    public LoginVO userLogin(LoginDTO dto) {
+        AppUser user = appUserMapper.getByUsername(dto.getUsername());
+        checkPassword(dto.getPassword(), user == null ? null : user.getPassword());
+        checkAccountStatus(user.getStatus());
+
+        LoginVO vo = new LoginVO();
+        vo.setId(user.getId());
+        vo.setUsername(user.getUsername());
+        vo.setNickname(user.getNickname());
+        vo.setAvatar(user.getAvatar());
+        vo.setToken(createToken(user.getId(), JwtClaimsConstant.USER, user.getUsername()));
+        return vo;
+    }
+
+    /**
+     * 验证密码（仅支持 BCrypt 加密密码）
+     */
+    private void checkPassword(String rawPassword, String encodedPassword) {
+        if (encodedPassword == null || !passwordEncoder.matches(rawPassword, encodedPassword)) {
+            throw new BusinessException("用户名或密码错误");
+        }
+    }
+
+    /**
+     * 检查账号启用状态
+     */
+    private void checkAccountStatus(Integer status) {
+        if (status == null || status == 0) {
+            throw new BusinessException("账号已禁用");
+        }
     }
 
     /**
@@ -94,17 +123,15 @@ public class AuthServiceImpl implements AuthService {
     }
 
     /**
-     * 用户注册
+     * 用户注册（密码使用 BCrypt 加密存储）
      */
     @Override
     @Transactional
     public void register(UserRegisterDTO dto) {
-        // 1. 检查用户名是否已存在
         Long count = appUserMapper.countByUsername(dto.getUsername());
         if (count > 0) {
             throw new BusinessException("用户名已存在");
         }
-        // 2. 新增用户
         AppUser user = new AppUser();
         user.setUsername(dto.getUsername());
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
@@ -114,30 +141,6 @@ public class AuthServiceImpl implements AuthService {
         user.setCreateTime(LocalDateTime.now());
         user.setUpdateTime(LocalDateTime.now());
         appUserMapper.insert(user);
-    }
-
-    /**
-     * 用户登录
-     */
-    @Override
-    public LoginVO userLogin(LoginDTO dto) {
-        // 1. 查询用户
-        AppUser user = appUserMapper.getByUsername(dto.getUsername());
-        if (user == null || !passwordMatches(dto.getPassword(), user.getPassword())) {
-            throw new BusinessException("用户名或密码错误");
-        }
-        // 2. 检查账号状态
-        if (user.getStatus() == null || user.getStatus() == 0) {
-            throw new BusinessException("账号已禁用");
-        }
-        // 3. 构造返回数据
-        LoginVO vo = new LoginVO();
-        vo.setId(user.getId());
-        vo.setUsername(user.getUsername());
-        vo.setNickname(user.getNickname());
-        vo.setAvatar(user.getAvatar());
-        vo.setToken(createToken(user.getId(), JwtClaimsConstant.USER, user.getUsername()));
-        return vo;
     }
 
     /**
@@ -168,28 +171,13 @@ public class AuthServiceImpl implements AuthService {
     }
 
     /**
-     * 密码校验：BCrypt加密的用BCrypt比对，明文直接比对
-     */
-    private boolean passwordMatches(String raw, String encoded) {
-        if (encoded == null) {
-            return false;
-        }
-        if (encoded.startsWith("$2a$") || encoded.startsWith("$2b$") || encoded.startsWith("$2y$")) {
-            return passwordEncoder.matches(raw, encoded);
-        }
-        return raw.equals(encoded);
-    }
-
-    /**
-     * 生成JWT Token
+     * 生成 JWT Token
      */
     private String createToken(Long id, String userType, String username) {
         Map<String, Object> claims = new HashMap<>();
         claims.put(JwtClaimsConstant.USER_ID, id);
         claims.put(JwtClaimsConstant.USER_TYPE, userType);
         claims.put(JwtClaimsConstant.USERNAME, username);
-        String secret = JwtClaimsConstant.ADMIN.equals(userType)
-                ? jwtProperties.getAdminSecretKey() : jwtProperties.getUserSecretKey();
-        return JwtUtil.createJwt(secret, jwtProperties.getTtl(), claims);
+        return JwtUtil.createJwt(jwtProperties.getSecretKey(), jwtProperties.getTtl(), claims);
     }
 }

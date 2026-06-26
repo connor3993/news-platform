@@ -17,8 +17,7 @@ export const useAdminStore = defineStore('admin', () => {
     adminInfo.value = {
       id: data.id,
       username: data.username,
-      name: data.name,
-      role: data.role
+      name: data.name
     }
     localStorage.setItem('admin_token', data.token)
     localStorage.setItem('admin_info', JSON.stringify(adminInfo.value))

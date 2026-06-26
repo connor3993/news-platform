@@ -39,7 +39,6 @@ cmd /c "mysql -uroot -p000000 < sql\init.sql"
 ## 测试账号
 
 - 管理端: `admin / 123456`
-- 管理端编辑: `editor / 123456`
 - 用户端: `zhangsan / 123456`
 
 ## 验证
