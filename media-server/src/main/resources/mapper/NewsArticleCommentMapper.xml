@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.connor.newsplatform.server.mapper.NewsArticleCommentMapper">
+
+    <!-- 根据用户id批量查询用户评论信息（动态SQL，使用 foreach） -->
+    <select id="selectByUserIds" resultType="NewsArticleComment">
+        select * from news_article_comment where user_id in
+        <foreach collection="userIds" item="userId" open="(" separator="," close=")">
+            #{userId}
+        </foreach>
+    </select>
+
+</mapper>

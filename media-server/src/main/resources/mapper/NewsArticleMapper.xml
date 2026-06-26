@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.connor.newsplatform.server.mapper.NewsArticleMapper">
+
+    <!-- 管理端分页查询（动态SQL，支持标题/分类/状态/时间范围筛选） -->
+    <select id="adminPageQuery" resultType="NewsArticle">
+        select * from news_article
+        <where>
+            <if test="title != null and title != ''">
+                and title like concat('%', #{title}, '%')
+            </if>
+            <if test="categoryId != null">
+                and category_id = #{categoryId}
+            </if>
+            <if test="status != null">
+                and status = #{status}
+            </if>
+            <if test="beginTime != null">
+                and create_time &gt;= #{beginTime}
+            </if>
+            <if test="endTime != null">
+                and create_time &lt;= #{endTime}
+            </if>
+        </where>
+        order by update_time desc
+    </select>
+
+    <!-- 用户端分页查询（已发布稿件，动态SQL+choose排序） -->
+    <select id="userPageQuery" resultType="NewsArticle">
+        select * from news_article
+        <where>
+            status = 4
+            <if test="categoryId != null">
+                and category_id = #{categoryId}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                and title like concat('%', #{keyword}, '%')
+            </if>
+        </where>
+        <choose>
+            <when test="sort == 'popular' or sort == 'hot'">
+                order by like_count desc, comment_count desc, favorite_count desc
+            </when>
+            <otherwise>
+                order by hot_score desc, publish_time desc
+            </otherwise>
+        </choose>
+    </select>
+
+    <!-- 用户我的稿件分页查询（动态SQL） -->
+    <select id="userMinePageQuery" resultType="NewsArticle">
+        select * from news_article
+        <where>
+            author_type = 'user' and author_id = #{authorId}
+            <if test="status != null">
+                and status = #{status}
+            </if>
+        </where>
+        order by update_time desc
+    </select>
+
+    <!-- 根据id列表批量查询稿件（使用 foreach） -->
+    <select id="selectByIds" resultType="NewsArticle">
+        select * from news_article where id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <!-- 新增稿件（useGeneratedKeys 返回自增主键） -->
+    <insert id="insert" parameterType="NewsArticle" useGeneratedKeys="true" keyProperty="id">
+        insert into news_article
+        (title, summary, cover_url, category_id, author_id, author_type, status,
+         publish_time, view_count, like_count, dislike_count, favorite_count, comment_count,
+         hot_score, reject_reason, create_time, update_time, create_user, update_user)
+        values
+        (#{title}, #{summary}, #{coverUrl}, #{categoryId}, #{authorId}, #{authorType}, #{status},
+         #{publishTime}, #{viewCount}, #{likeCount}, #{dislikeCount}, #{favoriteCount}, #{commentCount},
+         #{hotScore}, #{rejectReason}, #{createTime}, #{updateTime}, #{createUser}, #{updateUser})
+    </insert>
+
+    <!-- 修改稿件信息（动态SQL，只更新非空字段） -->
+    <update id="update" parameterType="NewsArticle">
+        update news_article
+        <set>
+            <if test="title != null">title = #{title},</if>
+            <if test="summary != null">summary = #{summary},</if>
+            <if test="coverUrl != null">cover_url = #{coverUrl},</if>
+            <if test="categoryId != null">category_id = #{categoryId},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="publishTime != null">publish_time = #{publishTime},</if>
+            <if test="rejectReason != null">reject_reason = #{rejectReason},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="updateUser != null">update_user = #{updateUser}</if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!-- 热点榜单 top10（choose 动态排序） -->
+    <select id="selectHotList" resultType="NewsArticle">
+        select * from news_article where status = 4
+        <choose>
+            <when test="sort == 'view'">order by view_count desc</when>
+            <when test="sort == 'like'">order by like_count desc</when>
+            <when test="sort == 'popular'">order by like_count desc, comment_count desc, favorite_count desc</when>
+            <otherwise>order by hot_score desc</otherwise>
+        </choose>
+        limit 10
+    </select>
+
+</mapper>

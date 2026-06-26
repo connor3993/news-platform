@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.connor.newsplatform.server.mapper.NewsCategoryMapper">
+
+    <!-- 分页查询分类（动态SQL，支持名称模糊搜索和状态筛选） -->
+    <select id="pageQuery" resultType="NewsCategory">
+        select * from news_category
+        <where>
+            <if test="name != null and name != ''">
+                and name like concat('%', #{name}, '%')
+            </if>
+            <if test="status != null">
+                and status = #{status}
+            </if>
+        </where>
+        order by sort asc, create_time desc
+    </select>
+
+    <!-- 根据id列表批量查询分类（使用 foreach） -->
+    <select id="selectByIds" resultType="NewsCategory">
+        select * from news_category where id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <!-- 修改分类信息（动态SQL，只更新非空字段） -->
+    <update id="update" parameterType="NewsCategory">
+        update news_category
+        <set>
+            <if test="name != null">name = #{name},</if>
+            <if test="sort != null">sort = #{sort},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="updateUser != null">update_user = #{updateUser}</if>
+        </set>
+        where id = #{id}
+    </update>
+
+</mapper>

@@ -27,12 +27,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "@@@@.md",
+                "file": "radiant-pulse-babbage.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "@@@@"
+              "title": "radiant-pulse-babbage"
             }
           }
         ],
@@ -200,9 +200,9 @@
   },
   "active": "1eb4eff6d9851c7c",
   "lastOpenFiles": [
+    "@@@@.md",
     "未命名.md",
     "项目介绍.md",
-    "@@@@.md",
     "媒体资讯平台后端业务逻辑面试讲解.md",
     "媒体资讯平台后端开发提示词（100% 兼容 Vue3 用户端 + 管理端接口）.md"
   ]

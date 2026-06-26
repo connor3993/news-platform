@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.connor.newsplatform.server.mapper.AppUserMapper">
+
+    <!-- 新增用户 -->
+    <insert id="insert" parameterType="AppUser" useGeneratedKeys="true" keyProperty="id">
+        insert into app_user (username, password, nickname, avatar, status, create_time, update_time)
+        values (#{username}, #{password}, #{nickname}, #{avatar}, #{status}, #{createTime}, #{updateTime})
+    </insert>
+
+    <!-- 修改用户（动态SQL） -->
+    <update id="update" parameterType="AppUser">
+        update app_user
+        <set>
+            <if test="password != null">password = #{password},</if>
+            <if test="nickname != null">nickname = #{nickname},</if>
+            <if test="avatar != null">avatar = #{avatar},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="updateTime != null">update_time = #{updateTime}</if>
+        </set>
+        where id = #{id}
+    </update>
+
+</mapper>

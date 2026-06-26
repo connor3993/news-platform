@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.connor.newsplatform.server.mapper.NewsReadRecordMapper">
+
+    <!-- 注：insert 已使用 @Insert 注解，此处保留备用 -->
+
+</mapper>
