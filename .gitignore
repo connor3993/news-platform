@@ -49,3 +49,6 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+
+### Local docs (working notes, not committed) ###
+docs/
