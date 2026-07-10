@@ -78,7 +78,6 @@
       <el-table-column prop="publishTime" label="发布时间" width="170" />
       <el-table-column prop="viewCount" label="浏览量" width="90" align="right" />
       <el-table-column prop="likeCount" label="点赞" width="80" align="right" />
-      <el-table-column prop="hotScore" label="热度分" width="90" align="right" />
       <el-table-column label="操作" width="300" fixed="right">
         <template #default="{ row }">
           <el-button

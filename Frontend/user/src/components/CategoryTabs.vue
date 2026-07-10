@@ -1,124 +1,42 @@
 <template>
-  <div class="category-tabs-wrapper">
-    <div class="category-tabs container">
-      <div class="tabs-scroll" role="tablist" aria-label="新闻分类">
-        <div
-          class="tab-item"
-          :class="{ active: !activeId }"
-          @click="handleSelect(null)"
-        >
-          全部
-        </div>
-        <div
-          v-for="cat in categories"
-          :key="cat.id"
-          class="tab-item"
-          :class="{ active: activeId === cat.id }"
-          @click="handleSelect(cat.id)"
-        >
-          {{ cat.name }}
-        </div>
+  <div class="cat-tabs">
+    <div class="cat-scroll">
+      <div class="cat-item" :class="{ active: !activeId }" @click="select(null)">全部</div>
+      <div
+        v-for="cat in categories"
+        :key="cat.id"
+        class="cat-item"
+        :class="{ active: activeId === cat.id }"
+        @click="select(cat.id)"
+      >
+        {{ cat.name }}
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-const props = defineProps({
-  categories: {
-    type: Array,
-    default: () => []
-  },
-  activeId: {
-    type: [Number, String, null],
-    default: null
-  }
+defineProps({
+  categories: { type: Array, default: () => [] },
+  activeId: { type: [Number, String, null], default: null }
 })
-
 const emit = defineEmits(['select'])
-
-const handleSelect = (id) => {
-  emit('select', id)
-}
+const select = (id) => emit('select', id)
 </script>
 
 <style scoped>
-.category-tabs-wrapper {
-  position: sticky;
-  top: var(--navbar-height);
-  z-index: 50;
-  background-color: var(--bg-color);
-  border-bottom: 1px solid var(--border-color);
+.cat-tabs {
+  position: sticky; top: 52px; z-index: 40; background: var(--bg);
+  border-bottom: 1px solid var(--border);
 }
-
-.category-tabs {
-  padding-top: 12px;
-  padding-bottom: 12px;
+.cat-scroll {
+  display: flex; gap: 8px; overflow-x: auto; white-space: nowrap;
+  padding: 10px 14px; scrollbar-width: none;
 }
-
-.tabs-scroll {
-  display: flex;
-  overflow-x: auto;
-  white-space: nowrap;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  gap: 8px;
-  padding: 4px 0;
+.cat-scroll::-webkit-scrollbar { display: none; }
+.cat-item {
+  flex-shrink: 0; height: 30px; padding: 0 14px; display: inline-flex; align-items: center;
+  border: 1px solid var(--border); font-size: 13px; color: var(--muted); background: var(--bg);
 }
-
-.tabs-scroll::-webkit-scrollbar {
-  display: none;
-}
-
-.tab-item {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 36px;
-  padding: 0 16px;
-  font-size: var(--font-size-base);
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  position: relative;
-  flex-shrink: 0;
-  user-select: none;
-  border-radius: 18px;
-  background-color: var(--bg-white);
-  border: 1px solid var(--border-color);
-  box-shadow: var(--shadow-sm);
-}
-
-.tab-item.active {
-  color: var(--primary-color);
-  font-weight: 600;
-  background-color: var(--primary-light);
-  border-color: var(--primary-light);
-}
-
-.tab-item:hover:not(.active) {
-  color: var(--primary-color);
-  border-color: var(--border-strong);
-  background-color: var(--bg-white);
-  box-shadow: var(--shadow-md);
-}
-
-/* Mobile: smaller tabs */
-@media (max-width: 767px) {
-  .category-tabs-wrapper {
-    top: 0;
-  }
-
-  .category-tabs {
-    padding-top: 10px;
-    padding-bottom: 10px;
-  }
-
-  .tab-item {
-    height: 32px;
-    padding: 0 12px;
-    font-size: var(--font-size-sm);
-    border-radius: 16px;
-  }
-}
+.cat-item.active { background: var(--primary); color: #fff; font-weight: 700; border-color: var(--primary); }
 </style>

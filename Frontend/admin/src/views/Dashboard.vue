@@ -55,30 +55,16 @@
         </div>
       </el-col>
     </el-row>
-
-    <!-- Hot Articles -->
-    <div class="chart-card" style="margin-top: 20px;">
-      <div class="chart-title">热门文章 Top10</div>
-      <el-table :data="hotArticles" stripe size="small" v-loading="hotLoading">
-        <el-table-column type="index" label="排名" width="70" align="center" />
-        <el-table-column prop="title" label="标题" min-width="200" show-overflow-tooltip />
-        <el-table-column prop="categoryName" label="分类" width="120" />
-        <el-table-column prop="viewCount" label="浏览量" width="100" align="right" />
-        <el-table-column prop="hotScore" label="热度分" width="100" align="right" />
-      </el-table>
-    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import * as echarts from 'echarts'
-import { getTodayStats, getReadStatistics, getPublishStatistics, getHotArticles } from '@/api/dashboard'
+import { getTodayStats, getReadStatistics, getPublishStatistics } from '@/api/dashboard'
 import { getLastNDays } from '@/utils/format'
 
 const todayStats = ref({})
-const hotArticles = ref([])
-const hotLoading = ref(false)
 const readChartRef = ref(null)
 const publishChartRef = ref(null)
 let readChart = null
@@ -145,18 +131,6 @@ async function fetchPublishChart() {
   } catch (e) { /* ignore */ }
 }
 
-async function fetchHotArticles() {
-  hotLoading.value = true
-  try {
-    const res = await getHotArticles()
-    hotArticles.value = res.data || []
-  } catch (e) {
-    hotArticles.value = []
-  } finally {
-    hotLoading.value = false
-  }
-}
-
 function handleResize() {
   readChart?.resize()
   publishChart?.resize()
@@ -166,7 +140,6 @@ onMounted(() => {
   fetchTodayStats()
   fetchReadChart()
   fetchPublishChart()
-  fetchHotArticles()
   window.addEventListener('resize', handleResize)
 })
 

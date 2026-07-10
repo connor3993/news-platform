@@ -20,8 +20,10 @@
 
     <modules>
         <module>media-common</module>
-        <module>media-pojo</module>
-        <module>media-server</module>
+        <module>media-domain</module>
+        <module>media-dao</module>
+        <module>media-service</module>
+        <module>media-web</module>
     </modules>
 
     <properties>
@@ -42,7 +44,22 @@
             </dependency>
             <dependency>
                 <groupId>com.connor</groupId>
-                <artifactId>media-pojo</artifactId>
+                <artifactId>media-domain</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.connor</groupId>
+                <artifactId>media-dao</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.connor</groupId>
+                <artifactId>media-service</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.connor</groupId>
+                <artifactId>media-web</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

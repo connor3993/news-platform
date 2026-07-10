@@ -4,28 +4,22 @@ import {
   getArticlePageApi,
   getArticleDetailApi,
   recordReadApi,
-  getHotArticlesApi,
   submitUserArticleApi,
   getMyArticlesApi,
   likeArticleApi,
   dislikeArticleApi,
   favoriteArticleApi,
-  getFavoriteArticlesApi,
-  getArticleCommentsApi,
-  addArticleCommentApi
+  getFavoriteArticlesApi
 } from '@/api/article'
 
 export const useArticleStore = defineStore('article', () => {
   const articleList = ref([])
   const total = ref(0)
-  const hotList = ref([])
   const currentArticle = ref(null)
   const myArticles = ref([])
   const myTotal = ref(0)
   const favoriteArticles = ref([])
   const favoriteTotal = ref(0)
-  const comments = ref([])
-  const commentTotal = ref(0)
   const loading = ref(false)
 
   /**
@@ -64,15 +58,6 @@ export const useArticleStore = defineStore('article', () => {
       }
     }
     currentArticle.value = detail
-    return res.data
-  }
-
-  /**
-   * Fetch hot articles top 10
-   */
-  async function fetchHotArticles(params = {}) {
-    const res = await getHotArticlesApi(params)
-    hotList.value = res.data || []
     return res.data
   }
 
@@ -121,24 +106,6 @@ export const useArticleStore = defineStore('article', () => {
     return data
   }
 
-  async function fetchComments(id, params) {
-    const res = await getArticleCommentsApi(id, params)
-    const data = res.data
-    comments.value = data.records || []
-    commentTotal.value = data.total || 0
-    return data
-  }
-
-  async function addComment(id, content) {
-    const res = await addArticleCommentApi(id, { content })
-    comments.value = [res.data, ...comments.value]
-    commentTotal.value += 1
-    if (currentArticle.value?.id === id) {
-      currentArticle.value.commentCount = (currentArticle.value.commentCount || 0) + 1
-    }
-    return res.data
-  }
-
   /**
    * Reset article list
    */
@@ -150,18 +117,14 @@ export const useArticleStore = defineStore('article', () => {
   return {
     articleList,
     total,
-    hotList,
     currentArticle,
     myArticles,
     myTotal,
     favoriteArticles,
     favoriteTotal,
-    comments,
-    commentTotal,
     loading,
     fetchArticles,
     fetchArticleDetail,
-    fetchHotArticles,
     recordRead,
     submitUserArticle,
     fetchMyArticles,
@@ -169,8 +132,6 @@ export const useArticleStore = defineStore('article', () => {
     dislikeArticle,
     favoriteArticle,
     fetchFavoriteArticles,
-    fetchComments,
-    addComment,
     resetArticles
   }
 })

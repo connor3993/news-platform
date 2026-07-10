@@ -1,10 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
-  {
-    path: '/',
-    redirect: '/home'
-  },
+  { path: '/', redirect: '/home' },
   {
     path: '/login',
     name: 'Login',
@@ -24,28 +21,10 @@ const routes = [
     meta: { title: '首页', requiresAuth: false }
   },
   {
-    path: '/category/:id',
-    name: 'Category',
-    component: () => import('@/views/Category.vue'),
-    meta: { title: '分类', requiresAuth: false }
-  },
-  {
-    path: '/search',
-    name: 'Search',
-    component: () => import('@/views/Search.vue'),
-    meta: { title: '搜索', requiresAuth: false }
-  },
-  {
     path: '/article/:id',
     name: 'ArticleDetail',
     component: () => import('@/views/ArticleDetail.vue'),
     meta: { title: '文章详情', requiresAuth: false }
-  },
-  {
-    path: '/hot',
-    name: 'Hot',
-    component: () => import('@/views/Hot.vue'),
-    meta: { title: '热点', requiresAuth: false }
   },
   {
     path: '/submit',
@@ -70,29 +49,21 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
-  scrollBehavior(to, from, savedPosition) {
-    if (savedPosition) return savedPosition
+  scrollBehavior() {
     return { top: 0 }
   }
 })
 
-// Router guards
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('user_token')
-
-  // Set page title
   document.title = to.meta.title ? `${to.meta.title} - 新闻资讯平台` : '新闻资讯平台'
 
-  // Redirect to home if already logged in and visiting login
   if (to.name === 'Login' && token) {
     return next('/home')
   }
-
-  // Redirect to login if auth required and not logged in
   if (to.meta.requiresAuth && !token) {
     return next({ path: '/login', query: { redirect: to.fullPath } })
   }
-
   next()
 })
 

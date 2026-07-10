@@ -1,4 +1,4 @@
-import { ElNotification } from 'element-plus'
+import { toast } from '@/utils/message'
 
 class NotifyWebSocket {
   constructor() {
@@ -31,12 +31,7 @@ class NotifyWebSocket {
     this.ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data)
-        ElNotification({
-          title: data.title || '消息通知',
-          message: data.content || '',
-          type: data.type?.includes('REJECT') ? 'warning' : 'info',
-          duration: 5200
-        })
+        toast(`${data.title || '消息通知'}：${data.content || ''}`)
       } catch (err) {
         console.error('WebSocket message parse error:', err)
       }

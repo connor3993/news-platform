@@ -67,23 +67,3 @@ export function getFavoriteArticlesApi(params) {
   return request.get('/user/article/favorite/page', { params })
 }
 
-/**
- * Get article comments
- */
-export function getArticleCommentsApi(id, params) {
-  return request.get(`/user/article/${id}/comment/page`, { params })
-}
-
-/**
- * Add article comment
- */
-export function addArticleCommentApi(id, data) {
-  return request.post(`/user/article/${id}/comment`, data)
-}
-
-/**
- * Get hot articles top 10
- */
-export function getHotArticlesApi(params) {
-  return request.get('/user/article/hot', { params })
-}

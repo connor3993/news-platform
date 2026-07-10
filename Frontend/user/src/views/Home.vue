@@ -1,97 +1,29 @@
 <template>
-  <div class="home-page page">
-    <section class="home-hero">
-      <div class="container hero-inner">
-        <div class="hero-copy">
-          <h1>最新资讯</h1>
-          <p>聚合媒体、科技、财经与国际新闻，快速捕捉正在发生的重点。</p>
-        </div>
-        <div class="hero-search" @click="isMobile && router.push('/search')">
-          <Search :size="18" class="search-icon" />
-          <input
-            v-model="searchKeyword"
-            type="text"
-            placeholder="搜索新闻..."
-            :readonly="isMobile"
-            @keyup.enter="handleSearch"
-          />
-        </div>
-      </div>
-    </section>
-
-    <!-- Category tabs -->
+  <div>
     <CategoryTabs
       :categories="categoryStore.categoryList"
       :activeId="activeCategoryId"
-      @select="handleCategorySelect"
+      @select="onCategory"
     />
 
-    <!-- Sort bar -->
-    <div class="sort-bar container">
-      <div class="sort-options">
-        <span
-          class="sort-item"
-          :class="{ active: sortBy === 'latest' }"
-          @click="changeSortBy('latest')"
-        >
-          最新
-        </span>
-        <span
-          class="sort-item"
-          :class="{ active: sortBy === 'popular' }"
-          @click="changeSortBy('popular')"
-        >
-          最受欢迎
-        </span>
-      </div>
-      <span class="total-count">共 {{ articleStore.total }} 篇文章</span>
-    </div>
-
-    <!-- Article list -->
-    <div class="article-list container">
-      <div class="article-grid" v-if="articleStore.articleList.length > 0">
-        <ArticleCard
-          v-for="(article, index) in articleStore.articleList"
-          :key="article.id"
-          :article="article"
-          :featured="index === 0"
-        />
-      </div>
-
-      <!-- Loading -->
-      <div class="loading-container" v-if="articleStore.loading">
-        <el-icon class="is-loading" :size="24"><Loading /></el-icon>
-        <span style="margin-left: 8px; color: var(--text-tertiary);">加载中...</span>
-      </div>
-
-      <!-- Empty -->
+    <div class="home-list">
+      <ArticleCard v-for="a in articleStore.articleList" :key="a.id" :article="a" />
+      <div v-if="articleStore.loading" class="loading">加载中…</div>
       <EmptyState
         v-if="!articleStore.loading && articleStore.articleList.length === 0"
         text="暂无文章"
-        :showAction="true"
-        actionText="刷新"
-        @action="loadArticles"
+        :show-action="true"
+        action-text="刷新"
+        @action="load(1)"
       />
-
-      <!-- Load more -->
-      <div class="load-more" v-if="hasMore && !articleStore.loading && articleStore.articleList.length > 0">
-        <el-button
-          type="primary"
-          plain
-          :loading="loadingMore"
-          @click="loadMore"
-        >
-          加载更多
-        </el-button>
-      </div>
+      <div v-if="hasMore && !articleStore.loading" ref="sentinel" class="sentinel"></div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { Search } from 'lucide-vue-next'
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useCategoryStore } from '@/stores/category'
 import { useArticleStore } from '@/stores/article'
 import ArticleCard from '@/components/ArticleCard.vue'
@@ -100,273 +32,75 @@ import EmptyState from '@/components/EmptyState.vue'
 
 defineOptions({ name: 'Home' })
 
-const router = useRouter()
+const route = useRoute()
 const categoryStore = useCategoryStore()
 const articleStore = useArticleStore()
 
-const screenWidth = ref(window.innerWidth)
-const isMobile = computed(() => screenWidth.value < 768)
-
 const activeCategoryId = ref(null)
-const sortBy = ref('latest')
-const searchKeyword = ref('')
+const searchKeyword = ref(route.query.keyword || '')
 const currentPage = ref(1)
 const pageSize = 10
-const loadingMore = ref(false)
+const sentinel = ref(null)
+let observer = null
 
-const hasMore = computed(() => {
-  return articleStore.articleList.length < articleStore.total
-})
+const hasMore = computed(() => articleStore.articleList.length < articleStore.total)
 
-const loadArticles = async (page = 1) => {
-  const params = {
-    page,
-    pageSize,
-    sort: sortBy.value
-  }
-  if (activeCategoryId.value) {
-    params.categoryId = activeCategoryId.value
-  }
-  if (searchKeyword.value) {
-    params.keyword = searchKeyword.value
-  }
-  await articleStore.fetchArticles(params)
+function buildParams(page) {
+  const p = { page, pageSize }
+  if (activeCategoryId.value) p.categoryId = activeCategoryId.value
+  if (searchKeyword.value.trim()) p.keyword = searchKeyword.value.trim()
+  return p
 }
 
-const loadMore = async () => {
-  loadingMore.value = true
-  currentPage.value++
-  try {
-    const params = {
-      page: currentPage.value,
-      pageSize,
-      sort: sortBy.value
-    }
-    if (activeCategoryId.value) {
-      params.categoryId = activeCategoryId.value
-    }
-    if (searchKeyword.value) {
-      params.keyword = searchKeyword.value
-    }
-    await articleStore.fetchArticles(params)
-  } finally {
-    loadingMore.value = false
-  }
+async function load(page = 1) {
+  currentPage.value = page
+  await articleStore.fetchArticles(buildParams(page))
 }
 
-const handleCategorySelect = (id) => {
+// 无限滚动：触底自动加载下一页（配合后端 PageHelper 分页）
+async function loadMore() {
+  if (articleStore.loading || !hasMore.value) return
+  await load(currentPage.value + 1)
+}
+
+function onCategory(id) {
   activeCategoryId.value = id
-  currentPage.value = 1
   articleStore.resetArticles()
-  loadArticles()
+  load(1)
 }
 
-const changeSortBy = (sort) => {
-  if (sortBy.value === sort) return
-  sortBy.value = sort
-  currentPage.value = 1
-  articleStore.resetArticles()
-  loadArticles()
+function setupObserver() {
+  if (!sentinel.value) return
+  observer = new IntersectionObserver(
+    (entries) => {
+      if (entries[0].isIntersecting) loadMore()
+    },
+    { rootMargin: '200px' }
+  )
+  observer.observe(sentinel.value)
 }
 
-const handleSearch = () => {
-  currentPage.value = 1
-  articleStore.resetArticles()
-  loadArticles()
-}
-
-// Infinite scroll on mobile via scroll event
-const handleScroll = () => {
-  if (loadingMore.value || !hasMore.value) return
-  const scrollTop = document.documentElement.scrollTop || document.body.scrollTop
-  const scrollHeight = document.documentElement.scrollHeight
-  const clientHeight = document.documentElement.clientHeight
-  if (scrollTop + clientHeight >= scrollHeight - 200) {
-    loadMore()
+watch(
+  () => route.query.keyword,
+  (kw) => {
+    searchKeyword.value = kw || ''
+    articleStore.resetArticles()
+    load(1)
   }
-}
+)
 
 onMounted(async () => {
-  window.addEventListener('resize', () => {
-    screenWidth.value = window.innerWidth
-  })
-  window.addEventListener('scroll', handleScroll)
   await categoryStore.fetchCategories()
-  await loadArticles()
+  await load(1)
+  await nextTick()
+  setupObserver()
 })
 
 onUnmounted(() => {
-  window.removeEventListener('scroll', handleScroll)
+  if (observer) observer.disconnect()
 })
 </script>
 
 <style scoped>
-.home-page {
-  padding-bottom: 24px;
-}
-
-.home-hero {
-  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-  border-bottom: 1px solid var(--border-color);
-}
-
-.hero-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 40px;
-  padding-top: 28px;
-  padding-bottom: 28px;
-}
-
-.hero-copy h1 {
-  font-size: 28px;
-  line-height: 1.25;
-  font-weight: 800;
-  color: var(--text-primary);
-  margin-bottom: 8px;
-  letter-spacing: -0.02em;
-}
-
-.hero-copy p {
-  font-size: var(--font-size-base);
-  color: var(--text-secondary);
-  max-width: 360px;
-}
-
-.hero-search {
-  position: relative;
-  display: flex;
-  align-items: center;
-  width: min(420px, 46%);
-  flex-shrink: 0;
-  height: 48px;
-  padding: 0 16px;
-  background-color: var(--bg-white);
-  border: 1px solid var(--border-color);
-  border-radius: 24px;
-  box-shadow: var(--shadow-sm);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.hero-search:hover,
-.hero-search:focus-within {
-  border-color: var(--border-strong);
-  box-shadow: var(--shadow-md);
-}
-
-.search-icon {
-  color: var(--text-tertiary);
-  flex-shrink: 0;
-  margin-right: 10px;
-}
-
-.hero-search input {
-  flex: 1;
-  min-width: 0;
-  border: none;
-  outline: none;
-  background: transparent;
-  font-size: var(--font-size-base);
-  color: var(--text-primary);
-}
-
-.hero-search input::placeholder {
-  color: var(--text-tertiary);
-}
-
-/* Sort bar */
-.sort-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: 8px;
-  padding-bottom: 16px;
-}
-
-.sort-options {
-  display: flex;
-  gap: 4px;
-}
-
-.sort-item {
-  display: inline-flex;
-  align-items: center;
-  height: 32px;
-  padding: 0 14px;
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
-  cursor: pointer;
-  border-radius: 16px;
-  transition: all 0.2s ease;
-}
-
-.sort-item.active {
-  color: var(--primary-color);
-  background-color: var(--primary-light);
-  font-weight: 600;
-}
-
-.sort-item:hover {
-  color: var(--primary-color);
-}
-
-.total-count {
-  font-size: var(--font-size-xs);
-  color: var(--text-tertiary);
-}
-
-/* Article grid */
-.article-list {
-  padding-top: 4px;
-  padding-bottom: 24px;
-}
-
-.article-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-}
-
-.load-more {
-  display: flex;
-  justify-content: center;
-  padding: 24px 0;
-}
-
-@media (max-width: 767px) {
-  .hero-inner {
-    display: block;
-    padding-top: 16px;
-    padding-bottom: 14px;
-  }
-
-  .hero-copy h1,
-  .hero-copy p {
-    display: none;
-  }
-
-  .hero-search {
-    width: 100%;
-    height: 44px;
-  }
-
-  .article-grid {
-    gap: 12px;
-  }
-}
-
-@media (min-width: 768px) {
-  .article-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .article-grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 24px;
-  }
-}
+.sentinel { height: 1px; }
 </style>

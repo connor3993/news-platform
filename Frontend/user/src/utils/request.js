@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { ElMessage } from 'element-plus'
+import { toast } from '@/utils/message'
 import router from '@/router'
 
 const EXPIRED_KEYWORDS = ['expired', 'jwt', 'token', '过期', '已过期', 'invalid']
@@ -44,7 +44,7 @@ request.interceptors.response.use(
         router.push('/login')
         return Promise.reject(new Error('auth expired'))
       }
-      ElMessage.error(res.msg || '请求失败')
+      toast(res.msg || '请求失败', 'error')
       return Promise.reject(new Error(res.msg || '请求失败'))
     }
     return res
@@ -67,11 +67,11 @@ request.interceptors.response.use(
     }
 
     if (status === 500) {
-      ElMessage.error('服务器内部错误')
+      toast('服务器内部错误', 'error')
     } else if (status === 404) {
-      ElMessage.error('请求的资源不存在')
+      toast('请求的资源不存在', 'error')
     } else {
-      ElMessage.error(errMsg || error.message)
+      toast(errMsg || error.message, 'error')
     }
     return Promise.reject(error)
   }

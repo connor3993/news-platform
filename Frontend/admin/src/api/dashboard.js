@@ -22,10 +22,3 @@ export function getPublishStatistics(params) {
     params
   })
 }
-
-export function getHotArticles() {
-  return request({
-    url: '/admin/statistics/hot',
-    method: 'get'
-  })
-}
