@@ -5,19 +5,43 @@
     <div v-if="loading" class="loading" style="min-height: 60vh">加载中…</div>
 
     <div v-else-if="article" class="detail pad">
-      <h1 class="d-title">{{ article.title }}</h1>
+      <h1 class="d-title">
+        <span v-if="isPaidArticle" class="paid-badge">付费</span>
+        <span>{{ cleanTitle }}</span>
+      </h1>
       <div class="d-meta">
         <span class="pill" v-if="article.categoryName">{{ article.categoryName }}</span>
         <span v-if="article.authorName">作者：{{ article.authorName }}</span>
         <span>{{ formatDate(article.publishTime) }}</span>
         <span>阅 {{ formatNumber(article.viewCount || 0) }}</span>
+        <span v-if="isPaidArticle" class="paid-price">¥ {{ formatAmount(article.price) }}</span>
       </div>
 
       <div class="d-cover" v-if="article.coverUrl">
-        <img :src="article.coverUrl" :alt="article.title" />
+        <img :src="article.coverUrl" :alt="cleanTitle" />
       </div>
 
       <div class="article-content" v-html="article.content"></div>
+
+      <div v-if="isPaidArticle" class="paid-panel">
+        <div>
+          <div class="paid-panel-title">
+            {{ isUnlocked ? '付费内容已解锁' : '继续阅读完整付费内容' }}
+          </div>
+          <div class="paid-panel-desc">
+            {{ isUnlocked ? unlockText : `支付 ¥ ${formatAmount(article.price)} 后解锁完整正文` }}
+          </div>
+        </div>
+        <button
+          v-if="showPaywall"
+          class="btn btn-primary paid-action"
+          :disabled="paywallLoading"
+          @click="goPay"
+        >
+          {{ paywallLoading ? '创建订单中…' : `立即解锁 ¥ ${formatAmount(article.price)}` }}
+        </button>
+        <span v-else class="paid-status">{{ unlockText }}</span>
+      </div>
 
       <div class="vote-bar">
         <button
@@ -58,21 +82,37 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useArticleStore } from '@/stores/article'
 import { useUserStore } from '@/stores/user'
-import { formatDate, formatNumber } from '@/utils/format'
+import { usePayStore } from '@/stores/pay'
+import { formatDate, formatNumber, formatAmount } from '@/utils/format'
 import EmptyState from '@/components/EmptyState.vue'
 
 const route = useRoute()
 const router = useRouter()
 const articleStore = useArticleStore()
 const userStore = useUserStore()
+const payStore = usePayStore()
 
 const loading = ref(true)
 const article = ref(null)
 const voteLoading = ref('')
+const paywallLoading = ref(false)
+
+const isPaidArticle = computed(() => Number(article.value?.isPaid) === 1)
+const cleanTitle = computed(() => String(article.value?.title || '').replace(/^【付费】\s*/, ''))
+const isAuthor = computed(() => {
+  if (!article.value || !userStore.userInfo) return false
+  return String(userStore.userInfo.id) === String(article.value.authorId)
+})
+const isUnlocked = computed(() => isPaidArticle.value && (article.value?.purchased === true || isAuthor.value))
+const unlockText = computed(() => (isAuthor.value ? '作者本人可查看' : '已解锁'))
+const showPaywall = computed(() => {
+  if (!article.value) return false
+  return isPaidArticle.value && !isUnlocked.value
+})
 
 function goBack() {
   if (window.history.length > 1) router.back()
@@ -106,6 +146,18 @@ async function fav() {
     voteLoading.value = ''
   }
 }
+async function goPay() {
+  if (!requireLogin()) return
+  paywallLoading.value = true
+  try {
+    const data = await payStore.createOrder(article.value.id)
+    router.push({ path: '/pay/checkout', query: { orderId: data.orderId, articleId: article.value.id } })
+  } catch (e) {
+    // message handled by request interceptor
+  } finally {
+    paywallLoading.value = false
+  }
+}
 
 onMounted(async () => {
   const id = route.params.id
@@ -116,6 +168,10 @@ onMounted(async () => {
   try {
     article.value = await articleStore.fetchArticleDetail(id)
     articleStore.recordRead(id).catch(() => {})
+    // 已登录但用户资料尚未加载时，补取一次用于判断"作者本人"。
+    if (!userStore.userInfo && userStore.isLogin) {
+      userStore.fetchUserInfo().catch(() => {})
+    }
   } catch (e) {
     article.value = null
   } finally {
@@ -130,11 +186,16 @@ onMounted(async () => {
   border-bottom: 1px solid #000; padding: 12px 14px; font-size: 14px; cursor: pointer;
 }
 .back-bar:hover { background: #f4f4f4; }
-.d-title { font-size: 20px; font-weight: 700; line-height: 1.4; margin-bottom: 10px; }
+.d-title { font-size: 20px; font-weight: 700; line-height: 1.4; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .d-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 11px; color: #999; margin-bottom: 14px; }
 .d-cover { margin: 4px 0 16px; }
 .d-cover img { width: 100%; }
 .vote-bar { display: flex; justify-content: center; gap: 10px; padding: 18px 0 6px; flex-wrap: wrap; }
 .comment-form { background: #f6f6f6; border: 1px solid #e2e2e2; padding: 12px; margin-bottom: 14px; }
 .comment-actions { display: flex; justify-content: flex-end; margin-top: 10px; }
+.paid-panel { margin: 24px 0 8px; }
+.paid-action { min-width: 160px; }
+@media (max-width: 640px) {
+  .paid-action { width: 100%; }
+}
 </style>

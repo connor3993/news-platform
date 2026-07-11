@@ -33,6 +33,12 @@ const routes = [
     meta: { title: '发布投稿', requiresAuth: true }
   },
   {
+    path: '/pay/checkout',
+    name: 'PayCheckout',
+    component: () => import('@/views/PayCheckout.vue'),
+    meta: { title: '确认支付', requiresAuth: true }
+  },
+  {
     path: '/profile',
     name: 'Profile',
     component: () => import('@/views/Profile.vue'),

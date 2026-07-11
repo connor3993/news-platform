@@ -1,0 +1,23 @@
+serverAddr = "39.102.79.179"
+serverPort = 443
+
+transport.tcpMuxKeepaliveInterval = 15
+transport.dialServerKeepalive = 30
+
+# newsPlatform（媒体资讯平台）后端：公网 28080 -> 本地 8080
+# 微信/支付宝回调地址即用 http://39.102.79.179:28080/...
+[[proxies]]
+name = "newsplatform"
+type = "tcp"
+localIP = "127.0.0.1"
+localPort = 8080
+remotePort = 28080
+
+# Minecraft 服务：原占 28080，为避免与 newsplatform 冲突改到 28081
+# 若 ECS 服务端 frps 未开放 28081，请二选一：把本段 remotePort 改回 28080（届时 newsplatform 需让出）
+[[proxies]]
+name = "minecraft"
+type = "tcp"
+localIP = "127.0.0.1"
+localPort = 25565
+remotePort = 28081

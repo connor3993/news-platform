@@ -43,3 +43,13 @@ export function truncateText(text, maxLength = 80) {
   if (text.length <= maxLength) return text
   return text.substring(0, maxLength) + '...'
 }
+
+/**
+ * Format price amount to fixed 2 decimals
+ */
+export function formatAmount(num) {
+  if (num === null || num === undefined || num === '') return '0.00'
+  const n = Number(num)
+  if (isNaN(n)) return '0.00'
+  return n.toFixed(2)
+}

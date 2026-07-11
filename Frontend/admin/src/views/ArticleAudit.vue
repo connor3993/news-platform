@@ -6,7 +6,12 @@
 
     <!-- Table -->
     <el-table :data="tableData" v-loading="loading" stripe border>
-      <el-table-column prop="title" label="标题" min-width="200" show-overflow-tooltip />
+      <el-table-column label="标题" min-width="220" show-overflow-tooltip>
+        <template #default="{ row }">
+          <el-tag v-if="row.isPaid === 1" type="danger" size="small" effect="dark" style="margin-right: 6px">付费</el-tag>
+          {{ row.title }}
+        </template>
+      </el-table-column>
       <el-table-column prop="categoryName" label="分类" width="120" />
       <el-table-column label="来源" width="110" align="center">
         <template #default="{ row }">
@@ -16,6 +21,12 @@
         </template>
       </el-table-column>
       <el-table-column prop="authorName" label="作者" width="120" show-overflow-tooltip />
+      <el-table-column v-if="false" label="价格" width="100" align="center">
+        <template #default="{ row }">
+          <span v-if="row.isPaid === 1">¥ {{ row.price }}</span>
+          <span v-else style="color: #ccc">免费</span>
+        </template>
+      </el-table-column>
       <el-table-column label="状态" width="100" align="center">
         <template #default="{ row }">
           <ArticleStatusTag :status="row.status" />

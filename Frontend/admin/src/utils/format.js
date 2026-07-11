@@ -11,12 +11,12 @@ export function formatDateTime(date) {
 }
 
 export const articleStatusMap = {
-  0: { label: '草稿', type: 'info' },
-  1: { label: '待审核', type: 'warning' },
-  2: { label: '审核通过', type: 'success' },
-  3: { label: '审核驳回', type: 'danger' },
-  4: { label: '已发布', type: '' },
-  5: { label: '已下架', type: 'info' }
+  DRAFT: { label: '草稿', type: 'info' },
+  PENDING: { label: '待审核', type: 'warning' },
+  APPROVED: { label: '审核通过', type: 'success' },
+  REJECTED: { label: '审核驳回', type: 'danger' },
+  PUBLISHED: { label: '已发布', type: '' },
+  OFFLINE: { label: '已下架', type: 'info' }
 }
 
 export function getArticleStatusLabel(status) {

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.connor.newsplatform.dao.PayOrderMapper">
+
+    <resultMap id="dataMap" type="com.connor.newsplatform.domain.po.PayOrder">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="article_id" property="articleId"/>
+        <result column="article_title" property="articleTitle"/>
+        <result column="order_id" property="orderId"/>
+        <result column="order_time" property="orderTime"/>
+        <result column="total_amount" property="totalAmount"/>
+        <result column="status" property="status"/>
+        <result column="pay_url" property="payUrl"/>
+        <result column="pay_time" property="payTime"/>
+        <result column="pay_trade_no" property="payTradeNo"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.connor.newsplatform.domain.po.PayOrder" useGeneratedKeys="true" keyProperty="id">
+        insert into pay_order
+        (user_id, article_id, article_title, order_id, order_time, total_amount, status, create_time, update_time)
+        values
+        (#{userId}, #{articleId}, #{articleTitle}, #{orderId}, #{orderTime}, #{totalAmount}, #{status}, now(), now())
+    </insert>
+
+    <update id="updatePayInfo" parameterType="com.connor.newsplatform.domain.po.PayOrder">
+        update pay_order
+        set pay_url = #{payUrl}, status = #{status}, update_time = now()
+        where order_id = #{orderId}
+    </update>
+
+    <update id="updatePaySuccess">
+        update pay_order
+        set status = 'PAY_SUCCESS', pay_time = #{payTime}, pay_trade_no = #{tradeNo}, update_time = now()
+        where order_id = #{orderId}
+    </update>
+
+    <update id="updateClose">
+        update pay_order
+        set status = 'CLOSE', update_time = now()
+        where order_id = #{orderId}
+    </update>
+
+    <select id="getByOrderId" resultMap="dataMap">
+        select * from pay_order where order_id = #{orderId} limit 1
+    </select>
+
+    <select id="getPaidByUserArticle" resultMap="dataMap">
+        select * from pay_order
+        where user_id = #{userId} and article_id = #{articleId} and status = 'PAY_SUCCESS'
+        order by id desc limit 1
+    </select>
+
+    <select id="getLatestUnpaid" resultMap="dataMap">
+        select * from pay_order
+        where user_id = #{userId} and article_id = #{articleId} and status in ('CREATE', 'PAY_WAIT')
+        order by id desc limit 1
+    </select>
+
+    <select id="queryTimeoutCloseList" resultType="java.lang.String">
+        select order_id as orderId from pay_order
+        where status = 'PAY_WAIT'
+          and order_time &lt;= date_sub(now(), interval #{timeoutMinutes} minute)
+        order by id asc
+        limit #{limit}
+    </select>
+
+    <select id="queryNoPayNotifyOrderList" resultType="java.lang.String">
+        select order_id as orderId from pay_order
+        where status = 'PAY_WAIT'
+          and order_time &lt;= date_sub(now(), interval 1 minute)
+        order by id asc
+        limit #{limit}
+    </select>
+
+</mapper>

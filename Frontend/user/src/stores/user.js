@@ -32,6 +32,23 @@ export const useUserStore = defineStore(
     }
 
     /**
+     * 直接使用登录结果（如微信扫码登录）写入会话态
+     */
+    async function loginSuccess(vo) {
+      token.value = vo.token
+      userInfo.value = {
+        id: vo.id,
+        username: vo.username,
+        nickname: vo.nickname,
+        avatar: vo.avatar
+      }
+      localStorage.setItem('user_token', vo.token)
+      localStorage.setItem('user_info', JSON.stringify(userInfo.value))
+      notifyWs.connect(vo.id)
+      return vo
+    }
+
+    /**
      * Fetch current user info from server
      */
     async function fetchUserInfo() {
@@ -69,6 +86,7 @@ export const useUserStore = defineStore(
       userInfo,
       isLogin,
       login,
+      loginSuccess,
       logout,
       fetchUserInfo,
       updateUserInfo

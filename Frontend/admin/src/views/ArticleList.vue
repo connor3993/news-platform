@@ -41,7 +41,7 @@
           v-for="(item, key) in articleStatusMap"
           :key="key"
           :label="item.label"
-          :value="Number(key)"
+          :value="key"
         />
       </el-select>
       <el-date-picker
@@ -81,7 +81,7 @@
       <el-table-column label="操作" width="300" fixed="right">
         <template #default="{ row }">
           <el-button
-            v-if="[0, 1, 2, 3, 4, 5].includes(row.status)"
+            v-if="['DRAFT','PENDING','APPROVED','REJECTED','PUBLISHED','OFFLINE'].includes(row.status)"
             type="primary"
             link
             size="small"
@@ -90,7 +90,7 @@
             编辑
           </el-button>
           <el-button
-            v-if="row.status === 0"
+            v-if="row.status === 'DRAFT'"
             type="success"
             link
             size="small"
@@ -99,7 +99,7 @@
             提交审核
           </el-button>
           <el-button
-            v-if="row.status === 2"
+            v-if="row.status === 'APPROVED'"
             type="warning"
             link
             size="small"
@@ -108,7 +108,7 @@
             发布
           </el-button>
           <el-button
-            v-if="row.status === 4"
+            v-if="row.status === 'PUBLISHED'"
             type="danger"
             link
             size="small"

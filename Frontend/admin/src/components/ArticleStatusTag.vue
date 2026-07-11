@@ -10,7 +10,7 @@ import { getArticleStatusLabel, getArticleStatusType } from '@/utils/format'
 
 const props = defineProps({
   status: {
-    type: Number,
+    type: String,
     required: true
   }
 })

@@ -1,0 +1,89 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: media-news
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/news_db?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+    username: root
+    password: '000000'
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+      database: 0
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 20MB
+
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.connor.newsplatform.domain.po
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+media:
+  jwt:
+    secret-key: media-news-secret-key
+    ttl: 86400000
+  oss:
+    endpoint: your-endpoint
+    access-key-id: your-access-key-id
+    access-key-secret: your-access-key-secret
+    bucket-name: your-bucket
+    url-prefix: https://your-bucket.oss-cn.com/
+  pay:
+    # 走平台内 mock 支付（推荐，无需沙箱账号）；切到真沙箱时改 false 并自行接入
+    mock: true
+    # 未支付订单超时关单时间（分钟）
+    timeout-minutes: 30
+
+# ============================================================
+# 微信公众号扫码登录配置
+# 「服务器地址(URL)」填内网穿透公网地址：
+#   http://39.102.79.179:28080/api/v1/weixin/portal/receive
+# 本地 8080 已通过 FRP 映射到公网 28080（见 frpc.toml 的 newsplatform 段）
+# 以下为参照 s-pay-mall-moni 的 dev 沙箱测试公众号配置，可直接用；
+# 若你有自己的公众号，替换 originalid/token/app-id/app-secret/template_id 即可
+# ============================================================
+weixin:
+  config:
+    # 公众号原始ID（基本配置）
+    originalid: gh_8d4a452679cc
+    # 自定义的 Token（需与公众号后台一致）
+    token: moni89
+    # 测试号 / 正式号 AppID
+    app-id: wx3d051062be3da08e
+    # AppSecret
+    app-secret: cd4787b8ab849c1393261a5ab44eed0b
+    # 模板消息 TemplateID（扫码成功下发登录通知）
+    template_id: cMTsFxD7NFW9qQZit5YNk3GFv6JWww__Zg5WJFgo3lU
+
+# ============================================================
+# 支付宝沙箱支付配置  https://opendocs.alipay.com/common/02kkv7
+# notify_url 用内网穿透公网地址（FRP 28080 -> 本地 8080）
+# 默认 media.pay.mock=true 走平台内 mock 支付；置 false 即走真实沙箱
+# 以下为参照 s-pay-mall-moni 的 dev 沙箱账号，可直接用
+# ============================================================
+alipay:
+  app_id: 9021000165618682
+  # 应用私钥（密钥工具生成）
+  merchant_private_key: MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDDtCnZyrq+but/63Q0Z7RwH6X86l0lZzbvu+/Et00HLudlsJOJLc8R/EUKGVE39BNoXASQVH3SAoI+XUuHm6+uAEaag1XdVQvy6E46I3l9TUscl4j7QkBXdEHra1bgYt+yxehT2aAcxwEn4adeVaugK46P2Ols5w6T1Hsc2Hgc9S5Jq6RyqGGoBtMm6fDOCBTvL6bEW39cRNx52CcbjuTa1l5HMY305GANNqS6Rvgi6MJ2YAJKsWErQWMHKdnTJ/tsRZTF2YshldnQA5ki1RrI7LH6YeqLWnEKx14RwYFyyTD7L0QdFgjmeNCsAT9Z7OfojiAlWdlzNgi85CuviJpFAgMBAAECggEBAJxH0C/iy9PtIdTqQsbild3/9/6LbUzEKsOw8dzGgBWfaBv1sSuX0EdNjBhvdUNYfvMUoHRddIhzhmyk9f7Z3aX3BGq5PKVeGAenaWjWEVt1kOjJPhNfqZ/s8AM+mYbgjkDl+AyVul2gsZSWh6A2i7KBdfv7PRTBQwvcX1/+oZSE80GdCRkOMbHo1QdKc4qPOVbWsHVTic8tfb3VJ6mW6rgwY01Ft8FuZOCm1Opg20Cxk+zNp16OAjg8aX1PJS0caGYybCyH9vFcxqG2Rvgqfw13Gm7SDpdvXNqvw4fNaKyih5xaYliQYUSUh50OW7W3YsDgPLW8CNQWtUgkZ2FOPNUCgYEA+FUGSGBUfrvEL9n5dRf7q9Z6OLG/t2vVXAZkJegbmH37QBlYsY6cPQWyDRRKlDXbWVb04uHEHJ4TBU3JtO5p0egJAid4Y8Gk9jDHhrn+epkKeWqWkbCow0lz/IjMixKf2s/Q8ZrvbKyrHDHM5DCmlZIlWgqVVrNMM1mA5DG1gqcCgYEAyb8hfAhaM+C1cDUiexH90InB6+w6tQ8ksMmv4UFjdTiv6weYUQ2GDD/G+ReadokjXGcdvMA6x9XBEMG47HLSATeF6P5/gO7M6+frOceQ7f4RNbXVaDJbIsGZ/BnKn6NhXkZ6Pqxhi22o9We1q65PYiaTIIU21Wgd84ujG1J1NTMCgYA/KIC8j6NtyBuRgAKuATeE8LuNB8gWwlo1WXrHGU1Lb18jYk7oebjK3FP4d5ywLTJoenE18u2JybpUswAGAEzxke4YmilIVcu6wZU9criCPcIoNy+sRh3l7RyOscwz4ry9TfV6PUl/fjrWpOPTdXwotk7Bo8dvkZJjzPO3Fd1wKQKBgBaKLhmHbVyCbIL+zL1nQy47Vdkf6Wc1K+o8flPyVERScwUVMiVMF3/i2D4YLv+zTqoSMzZVW7vb29gdbKWuJlxQcbuYQ3KKO4bXwGYSL9UHH7EagZ9EkP4PFz8dOpAfVs+LnDjIVZWYSNoyHg/yR5g1qxZlC71IBqChJzX0PngVAoGBAIsuwq/FVZ2gs9UFHW8M/fI4caFzcXlPtPNS699BRQFQGfnuCxPg3xgYf1Qp+h/m0De9RRn6M/uPn0bQJ4wncLR+sTCq713hKgCJJsabzROnIPNEbYmqWtXObr36lo7mlK8GkX1Zd37vqTfleaxb9YydmuEsA2JX0/DxX2avMtBO
+  # 支付宝公钥（支付宝后台查看）
+  alipay_public_key: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApM9TvW8WhcYbWZcJFNlpvinw8V0WJlYOJmu9b0R8Ij2SqXKhXnWiberRvrQYAjiBM+J5M4r/9OkpYnG4w4caEdBgUTHQJm0E9GKXZ60ThvxDbZgqGv94kuawgu27ttW5cIugIwtnX+8WVX2JvZGDqXeZPLChQqCFhz2ghpS6url04VZAnd455TMom8PYnYljaEZZe/rOsq7I62xasTY0uisypu2BfFakqZi4W+fTodDyx43erF4S8jQYrCe4nzjHoQWaMgkuvvHb7PbZN4jtDN174MKPk1meYO5Xu0k5NW2U+qM8jwPJHVyjEzfnVyh4dpVYCXASL3XHU7NPA5PyHQIDAQAB
+  # 异步通知（内网穿透公网地址，微信/支付宝能访问到本地 8080）
+  notify_url: http://39.102.79.179:28080/api/v1/alipay/alipay_notify_url
+  # 同步跳转
+  return_url: https://gaga.plus
+  # 沙箱网关
+  gatewayUrl: https://openapi-sandbox.dl.alipaydev.com/gateway.do

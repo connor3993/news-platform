@@ -64,4 +64,13 @@ const logout = () => {
 .bar-spacer { flex: 1; }
 .nav-search { display: flex; align-items: center; gap: 8px; }
 .nav-search-input { width: 200px; padding: 5px 10px; font-size: 13px; }
+
+@media (max-width: 640px) {
+  .app-bar { flex-wrap: wrap; gap: 8px 12px; }
+  .app-bar .nav-links { order: 3; width: 100%; flex-wrap: wrap; gap: 10px; }
+  .bar-spacer { display: none; }
+  .bar-right { margin-left: auto; }
+  .nav-search { order: 4; width: 100%; }
+  .nav-search-input { flex: 1; min-width: 0; width: auto; }
+}
 </style>
